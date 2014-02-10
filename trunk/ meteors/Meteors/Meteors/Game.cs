@@ -79,10 +79,29 @@ public class MeteorsGame : Game
         if (Keyboard.GetState().IsKeyDown(Keys.Escape))
             this.Exit();
 
+        //two ways of handling perspective
+        //1.) static world, mobile player -> player circles around the planet
+        //2.) static player, mobile world -> planet rotates under player, meteors, etc appear to rotate too
         if (Keyboard.GetState().IsKeyDown(Keys.D))
-            player.Angle += Player.PLAYER_ROT_SPEED;
+        {
+            //1.)
+            //player.Angle += Player.PLAYER_ROT_SPEED;
+
+            //2.)
+            planet.Angle -= Player.PLAYER_ROT_SPEED;
+            meteors.OffsetAngles(-Player.PLAYER_ROT_SPEED);
+            stars.OffsetAngles(-Player.PLAYER_ROT_SPEED);
+        }
         if (Keyboard.GetState().IsKeyDown(Keys.A))
-            player.Angle -= Player.PLAYER_ROT_SPEED;
+        {
+            //1.)
+            //player.Angle -= Player.PLAYER_ROT_SPEED;
+
+            //2.)
+            planet.Angle += Player.PLAYER_ROT_SPEED;
+            meteors.OffsetAngles(Player.PLAYER_ROT_SPEED);
+            stars.OffsetAngles(Player.PLAYER_ROT_SPEED);
+        }
 
         player.Update();
         meteors.Update(gameTime);

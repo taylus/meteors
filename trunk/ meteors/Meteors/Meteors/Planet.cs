@@ -10,6 +10,17 @@ public class Planet
     public Sprite Sprite { get; private set; }
     public Circle Bounds { get; private set; }
     public Circle OortCloud { get; private set; }
+    public float Angle
+    {
+        get
+        {
+            return Sprite.Rotation;
+        }
+        set
+        {
+            Sprite.Rotation = value;
+        }
+    }
 
     public Vector2 Center { get { return Bounds.Center; } }
     public float Radius { get { return Bounds.Radius; } }
