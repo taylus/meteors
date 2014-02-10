@@ -36,8 +36,7 @@ public class StarManager
             if (timeSinceLastSpawn >= SpawnInterval)
             {
                 //spawn a star
-                Sprite starSprite = new Sprite("star", Util.GetRandomPointOnCircle(ServiceLocator.Get<Planet>().OortCloud), 0.75f);
-                stars.Add(new Star(starSprite));
+                stars.Add(new Star());
                 lastSpawnTime = curTime.TotalGameTime;
             }
         }
@@ -64,5 +63,10 @@ public class StarManager
     public bool HasActiveStar()
     {
         return stars != null && stars.Count(s => !s.Active) > 0;
+    }
+
+    public void OffsetAngles(float angle)
+    {
+        stars.ForEach(s => s.Angle += angle);
     }
 }

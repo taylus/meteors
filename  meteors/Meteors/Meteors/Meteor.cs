@@ -7,33 +7,39 @@ public class Meteor
     public Sprite Sprite { get; set; }
     public bool Active { get; set; }
     public bool MarkedForDeletion { get; set; }
+    public float Angle
+    {
+        get
+        {
+            return Sprite.Rotation;
+        }
+        set
+        {
+            Sprite.Rotation = value;
+        }
+    }
 
     //use a smaller bounding rect on meteors
     public RotatedRectangle BoundingRectangle { get { return Sprite.RotatedRectangle.Scale(0.8f, 3, 1); } }
 
-    private Line fallLine;
-    private float fallLinePercent = 0;
-    private const float FALL_SPEED = 0.003f;
+    private float orbitRadius;
+    private const float FALL_SPEED = 2.0f;
     private static Texture2D dustTexture;
 
-    public Meteor(Sprite spr)
+    public Meteor()
     {
-        Sprite = spr;
+        Planet planet = ServiceLocator.Get<Planet>();
+        Sprite = new Sprite("meteor");
+        Angle = Util.Random(0, MathHelper.TwoPi);
+        orbitRadius = planet.OortCloud.Radius;
         Active = true;
         MarkedForDeletion = false;
-
-        //aim the meteors at random positions on a circle within the planet
-        Planet planet = ServiceLocator.Get<Planet>();
-        Circle meteorDestCircle = new Circle(planet.Center, planet.Radius - 100);
-        Vector2 dest = Util.GetRandomPointOnCircle(meteorDestCircle);
-        fallLine = new Line(spr.Position, dest);
     }
 
     public void Draw()
     {
         Sprite.Draw();
         //Util.DrawRectangle(BoundingRectangle, new Color(128, 0, 0, 32));
-        //Util.DrawLine(fallLine, new Color(0, 0, 128, 32));
 
         //lazy load a single, shared dust texture
         if (dustTexture == null) dustTexture = ServiceLocator.Get<ContentManager>().Load<Texture2D>("dust");
@@ -44,11 +50,11 @@ public class Meteor
         //meteor is active, moving towards its target
         if (Active)
         {
-            //make meteor trace its fall line
-            Vector2 newPosition = Util.CalculatePointOnLine(fallLine, fallLinePercent);
+            //make meteor fall by decreasing orbit radius
+            orbitRadius -= FALL_SPEED;
+            Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
+            Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
             Sprite.Position = newPosition;
-            fallLinePercent += FALL_SPEED;
-            if (fallLinePercent > 1) fallLinePercent = 1;
 
             //planet collision
             //TODO: play sound (add sound system to ServiceLocator)

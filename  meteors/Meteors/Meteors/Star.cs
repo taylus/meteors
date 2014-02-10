@@ -2,37 +2,44 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
+//TODO: why aren't Star and Meteor the same class!?
 public class Star
 {
     public Sprite Sprite { get; set; }
     public bool Active { get; set; }
     public bool MarkedForDeletion { get; set; }
+    public float Angle
+    {
+        get
+        {
+            return Sprite.Rotation;
+        }
+        set
+        {
+            Sprite.Rotation = value;
+        }
+    }
 
     //use a smaller bounding rect on meteors
     public RotatedRectangle BoundingRectangle { get { return Sprite.RotatedRectangle.Scale(0.8f, 3, 1); ; } }
 
-    private Line fallLine;
-    private float fallLinePercent = 0;
-    private const float FALL_SPEED = 0.015f;
+    private float orbitRadius;
+    private const float FALL_SPEED = 5.0f;
 
-    public Star(Sprite spr)
+    public Star()
     {
-        Sprite = spr;
+        Planet planet = ServiceLocator.Get<Planet>();
+        Sprite = new Sprite("star", 0.75f);
+        Angle = Util.Random(0, MathHelper.TwoPi);
+        orbitRadius = planet.OortCloud.Radius;
         Active = true;
         MarkedForDeletion = false;
-
-        //aim the star at a random position on a circle within the planet
-        Planet planet = ServiceLocator.Get<Planet>();
-        Circle destCircle = new Circle(planet.Center, planet.Radius - 100);
-        Vector2 dest = Util.GetRandomPointOnCircle(destCircle);
-        fallLine = new Line(spr.Position, dest);
     }
 
     public void Draw()
     {
         Sprite.Draw();
         //Util.DrawRectangle(BoundingRectangle, new Color(128, 0, 0, 32));
-        //Util.DrawLine(fallLine, new Color(0, 0, 128, 32));
     }
 
     public void Update()
@@ -43,10 +50,11 @@ public class Star
         //active, moving towards target
         if (Active)
         {
-            //trace along the fall line
-            Sprite.Position = Util.CalculatePointOnLine(fallLine, fallLinePercent);
-            fallLinePercent += FALL_SPEED;
-            if (fallLinePercent > 1) fallLinePercent = 1;
+            //make star fall by decreasing orbit radius
+            orbitRadius -= FALL_SPEED;
+            Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
+            Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
+            Sprite.Position = newPosition;
 
             //planet collision
             //TODO: play sound (add sound system to ServiceLocator)
@@ -54,6 +62,13 @@ public class Star
             {
                 Active = false;
             }
+        }
+        else
+        {
+            //don't fall, but need to recalculate position given angle
+            Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
+            Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
+            Sprite.Position = newPosition;
         }
 
         //player collision

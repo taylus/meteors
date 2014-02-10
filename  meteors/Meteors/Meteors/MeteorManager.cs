@@ -34,8 +34,7 @@ public class MeteorManager
             if (timeSinceLastSpawn >= SpawnInterval)
             {
                 //spawn a meteor
-                Sprite meteorSprite = new Sprite("meteor", Util.GetRandomPointOnCircle(ServiceLocator.Get<Planet>().OortCloud));
-                meteors.Add(new Meteor(meteorSprite));
+                meteors.Add(new Meteor());
                 lastSpawnTime = curTime.TotalGameTime;
             }
         }
@@ -67,5 +66,10 @@ public class MeteorManager
             Vector2 textSize = font.MeasureString(intervalText);
             sb.DrawString(font, intervalText, new Vector2(screen.Width - textSize.X - 2, screen.Height - textSize.Y), Color.White);
         }
+    }
+
+    public void OffsetAngles(float angle)
+    {
+        meteors.ForEach(m => m.Angle += angle);
     }
 }
