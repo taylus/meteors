@@ -18,6 +18,13 @@ public struct ScriptedMeteor
     }
 }
 
+public class MeteorWave
+{
+    public List<ScriptedMeteor> ScriptedMeteors;
+    public TimeSpan LoadTime;
+    public TimeSpan LastSpawnTimeIndex;
+}
+
 /// <summary>
 /// Manages a list of meteors and allows all to be updated and drawn at once.
 /// </summary>
@@ -25,16 +32,14 @@ public class MeteorManager
 {
     public int MaxRandomMeteors { get; set; }
     public TimeSpan SpawnInterval { get; set; }
-    public int Count { get { return meteors.Count; } }
+    public int Count { get { return activeMeteors.Count; } }
     public bool IsRandomActive { get; set; }
     public bool IsScriptActive { get; set; }
 
-    private List<Meteor> meteors = new List<Meteor>();
-    private TimeSpan lastSpawnTime;
+    private List<Meteor> activeMeteors = new List<Meteor>();
+    private TimeSpan lastRandomSpawnTime;
 
-    private List<ScriptedMeteor> scriptedMeteors = new List<ScriptedMeteor>();
-    private TimeSpan waveLoadTime;
-    private TimeSpan lastTimeIndex;
+    private List<MeteorWave> scriptedWaves = new List<MeteorWave>();
 
     public MeteorManager(int max, TimeSpan spawnInterval)
     {
@@ -48,59 +53,51 @@ public class MeteorManager
     {
         if (IsRandomActive)
         {
-            if (meteors.Count < MaxRandomMeteors)
+            if (activeMeteors.Count < MaxRandomMeteors)
             {
-                TimeSpan timeSinceLastSpawn = curTime.TotalGameTime.Subtract(lastSpawnTime);
+                TimeSpan timeSinceLastSpawn = curTime.TotalGameTime.Subtract(lastRandomSpawnTime);
                 if (timeSinceLastSpawn >= SpawnInterval)
                 {
                     //spawn a meteor
-                    meteors.Add(new Meteor());
-                    lastSpawnTime = curTime.TotalGameTime;
+                    activeMeteors.Add(new Meteor());
+                    lastRandomSpawnTime = curTime.TotalGameTime;
                 }
             }
         }
-        if (IsScriptActive)
+        foreach(MeteorWave wave in scriptedWaves)
         {
-            //spawn any meteors whose time indexes are between the last update and now
-            //TODO: FIXME, not working right when game is not active, or when multiple waves loaded
-            if (scriptedMeteors.Count > 0)
-            {
-                List<ScriptedMeteor> meteorsToSpawn = scriptedMeteors.
-                    Where(m => m.TimeIndex + waveLoadTime.TotalMilliseconds >= lastTimeIndex.TotalMilliseconds &&
-                               m.TimeIndex + waveLoadTime.TotalMilliseconds < curTime.TotalGameTime.TotalMilliseconds).ToList();
+            //FIXME: not working right when game is not active
+            List<ScriptedMeteor> meteorsToSpawn = wave.ScriptedMeteors.
+                    Where(m => m.TimeIndex + wave.LoadTime.TotalMilliseconds >= wave.LastSpawnTimeIndex.TotalMilliseconds &&
+                               m.TimeIndex + wave.LoadTime.TotalMilliseconds < curTime.TotalGameTime.TotalMilliseconds).ToList();
 
-                //remove from list of scripted meteors and add to list of current meteors
-                meteorsToSpawn.ForEach(m => scriptedMeteors.Remove(m));
-                meteors.AddRange(meteorsToSpawn.Select(m => m.Meteor));
-                lastTimeIndex = curTime.TotalGameTime;
-            }
-            else
-            {
-                //no more meteors in the script left to spawn
-                IsScriptActive = false;
-            }
+            //remove from list of scripted meteors and add to list of current meteors
+            meteorsToSpawn.ForEach(m => wave.ScriptedMeteors.Remove(m));
+            activeMeteors.AddRange(meteorsToSpawn.Select(m => m.Meteor));
+            wave.LastSpawnTimeIndex = curTime.TotalGameTime;
         }
 
         //iterate backwards to remove dead meteors inline
-        for (int i = meteors.Count - 1; i >= 0; i--)
+        for (int i = activeMeteors.Count - 1; i >= 0; i--)
         {
-            Meteor m = meteors[i];
+            Meteor m = activeMeteors[i];
             m.Update();
-            if (m.MarkedForDeletion) meteors.Remove(m);
+            if (m.MarkedForDeletion) activeMeteors.Remove(m);
 
             //TODO: do something about draw order so dust clouds are always drawn over new meteors?
+            //need to draw them as separate objects, on top of player and other falling meteors
         }
     }
 
     public void Draw(SpriteBatch sb, bool debug = false)
     {
-        foreach (Meteor m in meteors)
+        foreach (Meteor m in activeMeteors)
             m.Draw(sb);
 
         if (debug)
         {
             Viewport screen = sb.GraphicsDevice.Viewport;
-            sb.DrawString(BaseGame.Font, String.Format("Meteors: {0}", meteors.Count), new Vector2(2, screen.Height - BaseGame.Font.LineSpacing), Color.White);
+            sb.DrawString(BaseGame.Font, String.Format("Meteors: {0}", activeMeteors.Count), new Vector2(2, screen.Height - BaseGame.Font.LineSpacing), Color.White);
 
             string intervalText = String.Format("Interval: {0} ms", SpawnInterval.TotalMilliseconds);
             Vector2 textSize = BaseGame.Font.MeasureString(intervalText);
@@ -110,9 +107,10 @@ public class MeteorManager
 
     public void LoadWave(string pathname, GameTime curTime)
     {
-        IsScriptActive = true;
-        lastTimeIndex = TimeSpan.Zero;
-        waveLoadTime = curTime.TotalGameTime;
+        MeteorWave wave = new MeteorWave();
+        wave.LoadTime = curTime.TotalGameTime;
+        wave.LastSpawnTimeIndex = TimeSpan.Zero;
+        wave.ScriptedMeteors = new List<ScriptedMeteor>();
 
         using (StreamReader sr = new StreamReader(pathname))
         {
@@ -128,14 +126,19 @@ public class MeteorManager
                 long time = long.Parse(lineData[0]);
                 float angle = MathHelper.ToRadians(float.Parse(lineData[1]));
                 Meteor meteor = new Meteor(angle);
-                scriptedMeteors.Add(new ScriptedMeteor(time, meteor));
+                wave.ScriptedMeteors.Add(new ScriptedMeteor(time, meteor));
             }
         }
+
+        scriptedWaves.Add(wave);
     }
 
     public void OffsetAngles(float angle)
     {
-        meteors.ForEach(m => m.Angle += angle);
-        scriptedMeteors.ForEach(m => m.Meteor.Angle += angle);
+        activeMeteors.ForEach(m => m.Angle += angle);
+        foreach (MeteorWave wave in scriptedWaves)
+        {
+            wave.ScriptedMeteors.ForEach(m => m.Meteor.Angle += angle);
+        }
     }
 }

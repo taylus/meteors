@@ -63,6 +63,10 @@ public class MeteorsGame : BaseGame
 
         if (curKeyboard.IsKeyDown(Keys.Escape)) this.Exit();
 
+        if (KeyPressedThisFrame(Keys.Space))
+        {
+            player.Sprite.Color = Color.White;
+        }
         if (KeyPressedThisFrame(Keys.Tab))
         {
             if (meteors.IsRandomActive)
@@ -120,9 +124,9 @@ public class MeteorsGame : BaseGame
         spriteBatch.Begin();
         spriteBatch.Draw(background, GraphicsDevice.Viewport.Bounds, Color.White);
         planet.Draw(spriteBatch);
-        player.Draw(spriteBatch);
         meteors.Draw(spriteBatch, true);
         stars.Draw(spriteBatch, true);
+        player.Draw(spriteBatch);
         spriteBatch.End();
 
         base.Draw(gameTime);
