@@ -37,9 +37,9 @@ public class Player
         Sprite.Rotation = Angle + MathHelper.PiOver2;
     }
 
-    public void Draw()
+    public void Draw(SpriteBatch sb)
     {
-        Sprite.Draw();
+        Sprite.Draw(sb);
         //Util.DrawRectangle(Sprite.RotatedRectangle, new Color(0, 128, 0, 32));
     }
 }

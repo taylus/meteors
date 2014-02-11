@@ -36,9 +36,9 @@ public class Star
         MarkedForDeletion = false;
     }
 
-    public void Draw()
+    public void Draw(SpriteBatch sb)
     {
-        Sprite.Draw();
+        Sprite.Draw(sb);
         //Util.DrawRectangle(BoundingRectangle, new Color(128, 0, 0, 32));
     }
 

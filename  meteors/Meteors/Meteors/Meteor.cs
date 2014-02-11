@@ -26,23 +26,29 @@ public class Meteor
     private const float FALL_SPEED = 2.0f;
     private static Texture2D dustTexture;
 
-    public Meteor()
+    public Meteor(float? angle = null)
     {
-        Planet planet = ServiceLocator.Get<Planet>();
         Sprite = new Sprite("meteor");
-        Angle = Util.Random(0, MathHelper.TwoPi);
-        orbitRadius = planet.OortCloud.Radius;
+        if (angle == null)
+        {
+            Angle = Util.Random(0, MathHelper.TwoPi);
+        }
+        else
+        {
+            Angle = angle.Value;
+        }
+        orbitRadius = ServiceLocator.Get<Planet>().OortCloud.Radius;
         Active = true;
         MarkedForDeletion = false;
     }
 
-    public void Draw()
+    public void Draw(SpriteBatch sb)
     {
-        Sprite.Draw();
+        Sprite.Draw(sb);
         //Util.DrawRectangle(BoundingRectangle, new Color(128, 0, 0, 32));
 
         //lazy load a single, shared dust texture
-        if (dustTexture == null) dustTexture = ServiceLocator.Get<ContentManager>().Load<Texture2D>("dust");
+        if (dustTexture == null) dustTexture = BaseGame.LoadTexture("dust");
     }
 
     public void Update()

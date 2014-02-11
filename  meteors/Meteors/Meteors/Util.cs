@@ -65,6 +65,11 @@ public static class Util
         return new Vector2(Random(minX, maxY), Random(minY, maxY));
     }
 
+    public static Vector2 ToVector2(this Point p)
+    {
+        return new Vector2(p.X, p.Y);
+    }
+
     public static float Distance(float x1, float y1, float x2, float y2)
     {
         double dx = x1 - x2;
@@ -159,11 +164,5 @@ public static class Util
         float dy = c2.Center.Y - c1.Center.Y;
         float radii = c1.Radius + c2.Radius;
         return ((dx * dx) + (dy * dy) < (radii * radii));
-    }
-
-    public static Vector2 GetScreenCenter()
-    {
-        GraphicsDevice gd = ServiceLocator.Get<SpriteBatch>().GraphicsDevice;
-        return new Vector2(gd.Viewport.Width / 2, gd.Viewport.Height / 2);
     }
 }
