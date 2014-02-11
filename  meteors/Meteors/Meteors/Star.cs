@@ -52,9 +52,6 @@ public class Star
         {
             //make star fall by decreasing orbit radius
             orbitRadius -= FALL_SPEED;
-            Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
-            Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
-            Sprite.Position = newPosition;
 
             //planet collision
             //TODO: play sound (add sound system to ServiceLocator)
@@ -63,13 +60,8 @@ public class Star
                 Active = false;
             }
         }
-        else
-        {
-            //don't fall, but need to recalculate position given angle
-            Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
-            Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
-            Sprite.Position = newPosition;
-        }
+
+        CalculatePosition();
 
         //player collision
         Player p = ServiceLocator.Get<Player>();
@@ -77,5 +69,13 @@ public class Star
         {
             MarkedForDeletion = true;
         }
+    }
+
+    //calculates the star's current position given the planet and the star's current orbit
+    private void CalculatePosition()
+    {
+        Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
+        Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
+        Sprite.Position = newPosition;
     }
 }

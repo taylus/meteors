@@ -52,9 +52,6 @@ public class Meteor
         {
             //make meteor fall by decreasing orbit radius
             orbitRadius -= FALL_SPEED;
-            Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
-            Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
-            Sprite.Position = newPosition;
 
             //planet collision
             //TODO: play sound (add sound system to ServiceLocator)
@@ -83,5 +80,15 @@ public class Meteor
             Sprite.Scale += 0.0015f;
             if (Sprite.Alpha <= 0) MarkedForDeletion = true;
         }
+
+        CalculatePosition();
+    }
+
+    //calculates the meteor's current position given the planet and the meteor's current orbit
+    private void CalculatePosition()
+    {
+        Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
+        Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
+        Sprite.Position = newPosition;
     }
 }
