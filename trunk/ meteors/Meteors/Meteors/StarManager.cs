@@ -54,10 +54,10 @@ public class StarManager
         }
     }
 
-    public void Draw(bool debug)
+    public void Draw(SpriteBatch sb, bool debug)
     {
         foreach (Star s in stars)
-            s.Draw();
+            s.Draw(sb);
     }
 
     public bool HasActiveStar()

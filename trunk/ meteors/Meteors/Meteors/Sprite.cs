@@ -42,7 +42,7 @@ public class Sprite
 
     public Sprite(string assetName, Color color, Vector2 pos, float rotation, float scale)
     {
-        Texture = ServiceLocator.Get<ContentManager>().Load<Texture2D>(assetName);
+        Texture = BaseGame.LoadTexture(assetName);
         Color = color;
         Position = pos;
         Rotation = rotation;
@@ -56,13 +56,11 @@ public class Sprite
     public Sprite(string assetName, float scale) : this(assetName, Color.White, Vector2.Zero, 0, scale) { }
     public Sprite(string assetName, Vector2 pos, float scale) : this(assetName, Color.White, pos, 0, scale) { }
 
-    public void Draw()
+    public void Draw(SpriteBatch sb)
     {
         // note: sprite is *centered* on Position, not upper-left corner
         // use Vector2.Zero instead of Center as origin for default behavior
         // TODO: have a Draw and DrawCentered?
-
-        SpriteBatch sb = ServiceLocator.Get<SpriteBatch>();
         sb.Draw(Texture, Position, null, Color.Lerp(Color.Transparent, Color, MathHelper.Clamp(Alpha, 0, 1)), Rotation, Center, Scale, SpriteEffects.None, 0);
     }
 

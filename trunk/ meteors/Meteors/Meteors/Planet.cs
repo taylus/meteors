@@ -33,8 +33,8 @@ public class Planet
         OortCloud = new Circle(position, oortCloudRadius);
     }
 
-    public void Draw()
+    public void Draw(SpriteBatch sb)
     {
-        Sprite.Draw();
+        Sprite.Draw(sb);
     }
 }
