@@ -63,11 +63,11 @@ public class MeteorsGame : BaseGame
 
         if (curKeyboard.IsKeyDown(Keys.Escape)) this.Exit();
 
-        if (KeyPressedThisFrame(Keys.Space))
+        if (KeyPressedThisFrame(Keys.Tab))
         {
             player.Sprite.Color = Color.White;
         }
-        if (KeyPressedThisFrame(Keys.Tab))
+        if (KeyPressedThisFrame(Keys.Space))
         {
             if (meteors.IsRandomActive)
             {
@@ -83,12 +83,15 @@ public class MeteorsGame : BaseGame
         if (KeyPressedThisFrame(Keys.D1))
         {
             meteors.IsRandomActive = false;
-            meteors.LoadWave(@"waves\spirals.txt", gameTime);
+            meteors.LoadWave(@"waves\spirals.txt");
         }
         if (KeyPressedThisFrame(Keys.D2))
         {
-            meteors.IsRandomActive = false;
-            meteors.LoadWave(@"waves\ring.txt", gameTime);
+            meteors.LoadWave(@"waves\ring.txt");
+        }
+        if (KeyPressedThisFrame(Keys.D3))
+        {
+            meteors.LoadWave(@"waves\quadrants.txt");
         }
 
         if (Keyboard.GetState().IsKeyDown(Keys.D))
@@ -124,9 +127,10 @@ public class MeteorsGame : BaseGame
         spriteBatch.Begin();
         spriteBatch.Draw(background, GraphicsDevice.Viewport.Bounds, Color.White);
         planet.Draw(spriteBatch);
-        meteors.Draw(spriteBatch, true);
+        meteors.DrawMeteors(spriteBatch, true);
         stars.Draw(spriteBatch, true);
         player.Draw(spriteBatch);
+        meteors.DrawDustClouds(spriteBatch);
         spriteBatch.End();
 
         base.Draw(gameTime);
