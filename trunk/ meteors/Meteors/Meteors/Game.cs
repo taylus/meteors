@@ -82,7 +82,7 @@ public class MeteorsGame : BaseGame
         }
         if (KeyPressedThisFrame(Keys.D1))
         {
-            meteors.IsRandomActive = false;
+            //meteors.IsRandomActive = false;
             meteors.LoadWave(@"waves\spirals.txt");
         }
         if (KeyPressedThisFrame(Keys.D2))
@@ -105,6 +105,15 @@ public class MeteorsGame : BaseGame
             planet.Angle += Player.PLAYER_ROT_SPEED;
             meteors.OffsetAngles(Player.PLAYER_ROT_SPEED);
             stars.OffsetAngles(Player.PLAYER_ROT_SPEED);
+        }
+
+        if (ScrollDownThisFrame() && meteors.SpawnInterval > TimeSpan.Zero)
+        {
+            meteors.SpawnInterval -= TimeSpan.FromMilliseconds(10);
+        }
+        else if (ScrollUpThisFrame())
+        {
+            meteors.SpawnInterval += TimeSpan.FromMilliseconds(10);
         }
 
         player.Update();
