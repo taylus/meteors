@@ -156,10 +156,12 @@ public class MeteorManager
 
                 string[] lineData = line.Split(' ');
 
-                //TODO: add error handling
-                //expected format: <time index in ms> <angle in degrees>
-                long time = long.Parse(lineData[0]);
-                float angle = MathHelper.ToRadians(float.Parse(lineData[1]));
+                long time; float angle;
+                if (!long.TryParse(lineData[0], out time) || !float.TryParse(lineData[1], out angle))
+                {
+                    throw new Exception("Error loading wave \"" + pathname + "\". Expected format: <time index in ms> <angle in degrees>");
+                }
+                angle = MathHelper.ToRadians(float.Parse(lineData[1]));
                 Meteor meteor = new Meteor(angle);
                 wave.ScriptedMeteors.Add(new ScriptedMeteor(time, meteor));
             }
