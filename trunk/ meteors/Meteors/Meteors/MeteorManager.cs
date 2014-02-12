@@ -18,11 +18,30 @@ public struct ScriptedMeteor
     }
 }
 
+//think of MeteorWaves like a song
+//a time index window slides over the notes and spawns them as meteors
 public class MeteorWave
 {
     public List<ScriptedMeteor> ScriptedMeteors;
-    public TimeSpan LoadTime;
     public TimeSpan LastSpawnTimeIndex;
+    public TimeSpan CurrentSpawnTimeIndex;
+
+    //determines, removes, and returns the meteors to spawn given this wave's current and last time indexes
+    public List<ScriptedMeteor> GetMeteorsToSpawn()
+    {
+        //List<ScriptedMeteor> meteorsToSpawn =  
+        //    ScriptedMeteors.Where(m => m.TimeIndex >= LastSpawnTimeIndex.TotalMilliseconds &&
+        //                               m.TimeIndex < CurrentSpawnTimeIndex.TotalMilliseconds).ToList();
+        var meteorsToSpawn = ScriptedMeteors.Where(m => m.TimeIndex < CurrentSpawnTimeIndex.TotalMilliseconds).ToList();
+        meteorsToSpawn.ForEach(m => ScriptedMeteors.Remove(m));
+        return meteorsToSpawn;
+    }
+
+    //returns true if all meteors
+    public bool IsComplete()
+    {
+        return ScriptedMeteors.All(m => m.TimeIndex < CurrentSpawnTimeIndex.TotalMilliseconds);
+    }
 }
 
 /// <summary>
@@ -66,18 +85,23 @@ public class MeteorManager
         }
         foreach(MeteorWave wave in scriptedWaves)
         {
-            //FIXME: not working right when game is not active
-            List<ScriptedMeteor> meteorsToSpawn = wave.ScriptedMeteors.
-                    Where(m => m.TimeIndex + wave.LoadTime.TotalMilliseconds >= wave.LastSpawnTimeIndex.TotalMilliseconds &&
-                               m.TimeIndex + wave.LoadTime.TotalMilliseconds < curTime.TotalGameTime.TotalMilliseconds).ToList();
+            //advance the current time by however much time elapsed since the last update
+            wave.CurrentSpawnTimeIndex += curTime.ElapsedGameTime;
 
-            //remove from list of scripted meteors and add to list of current meteors
-            meteorsToSpawn.ForEach(m => wave.ScriptedMeteors.Remove(m));
+            //determine which meteors to spawn
+            List<ScriptedMeteor> meteorsToSpawn = wave.GetMeteorsToSpawn();
             activeMeteors.AddRange(meteorsToSpawn.Select(m => m.Meteor));
-            wave.LastSpawnTimeIndex = curTime.TotalGameTime;
+            wave.LastSpawnTimeIndex = wave.CurrentSpawnTimeIndex;
         }
 
-        //iterate backwards to remove dead meteors inline
+        //remove completed waves
+        for (int i = scriptedWaves.Count - 1; i >= 0; i--)
+        {
+            MeteorWave wave = scriptedWaves[i];
+            if (wave.IsComplete()) scriptedWaves.Remove(wave);
+        }
+
+        //remove dead meteors
         for (int i = activeMeteors.Count - 1; i >= 0; i--)
         {
             Meteor m = activeMeteors[i];
@@ -89,15 +113,18 @@ public class MeteorManager
         }
     }
 
-    public void Draw(SpriteBatch sb, bool debug = false)
+    public void DrawMeteors(SpriteBatch sb, bool debug = false)
     {
         foreach (Meteor m in activeMeteors)
-            m.Draw(sb);
+        {
+            if(m.Active) m.Draw(sb);
+        }
 
         if (debug)
         {
             Viewport screen = sb.GraphicsDevice.Viewport;
-            sb.DrawString(BaseGame.Font, String.Format("Meteors: {0}", activeMeteors.Count), new Vector2(2, screen.Height - BaseGame.Font.LineSpacing), Color.White);
+            sb.DrawString(BaseGame.Font, string.Format("Waves: {0}", scriptedWaves.Count), new Vector2(2, screen.Height - 2 * BaseGame.Font.LineSpacing), Color.White);
+            sb.DrawString(BaseGame.Font, string.Format("Meteors: {0}", activeMeteors.Count), new Vector2(2, screen.Height - BaseGame.Font.LineSpacing), Color.White);
 
             string intervalText = String.Format("Interval: {0} ms", SpawnInterval.TotalMilliseconds);
             Vector2 textSize = BaseGame.Font.MeasureString(intervalText);
@@ -105,11 +132,19 @@ public class MeteorManager
         }
     }
 
-    public void LoadWave(string pathname, GameTime curTime)
+    public void DrawDustClouds(SpriteBatch sb)
+    {
+        foreach (Meteor m in activeMeteors)
+        {
+            if(!m.Active) m.Draw(sb);
+        }
+    }
+
+    public void LoadWave(string pathname)
     {
         MeteorWave wave = new MeteorWave();
-        wave.LoadTime = curTime.TotalGameTime;
         wave.LastSpawnTimeIndex = TimeSpan.Zero;
+        wave.CurrentSpawnTimeIndex = TimeSpan.Zero;
         wave.ScriptedMeteors = new List<ScriptedMeteor>();
 
         using (StreamReader sr = new StreamReader(pathname))
