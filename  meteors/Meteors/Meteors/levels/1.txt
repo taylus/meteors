@@ -1,0 +1,4 @@
+0 "waves\quadrants.txt"
+2500 "waves\quadrants.txt"
+5000 "waves\quadrants.txt"
+6000 "waves\spirals.txt"

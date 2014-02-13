@@ -91,7 +91,8 @@ public class MeteorsGame : BaseGame
         }
         if (KeyPressedThisFrame(Keys.D3))
         {
-            meteors.LoadWave(@"waves\quadrants.txt");
+            //meteors.LoadWave(@"waves\quadrants.txt");
+            meteors.LoadLevel(@"levels\1.txt");
         }
 
         if (Keyboard.GetState().IsKeyDown(Keys.D))
