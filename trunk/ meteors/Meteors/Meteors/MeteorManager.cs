@@ -29,18 +29,15 @@ public class MeteorWave
     //determines, removes, and returns the meteors to spawn given this wave's current and last time indexes
     public List<ScriptedMeteor> GetMeteorsToSpawn()
     {
-        //List<ScriptedMeteor> meteorsToSpawn =  
-        //    ScriptedMeteors.Where(m => m.TimeIndex >= LastSpawnTimeIndex.TotalMilliseconds &&
-        //                               m.TimeIndex < CurrentSpawnTimeIndex.TotalMilliseconds).ToList();
         var meteorsToSpawn = ScriptedMeteors.Where(m => m.TimeIndex < CurrentSpawnTimeIndex.TotalMilliseconds).ToList();
         meteorsToSpawn.ForEach(m => ScriptedMeteors.Remove(m));
         return meteorsToSpawn;
     }
 
-    //returns true if all meteors
+    //returns true if all meteors in this wave have been spawned
     public bool IsComplete()
     {
-        return ScriptedMeteors.All(m => m.TimeIndex < CurrentSpawnTimeIndex.TotalMilliseconds);
+        return ScriptedMeteors.Count <= 0;
     }
 }
 
@@ -98,7 +95,8 @@ public class MeteorManager
         for (int i = scriptedWaves.Count - 1; i >= 0; i--)
         {
             MeteorWave wave = scriptedWaves[i];
-            if (wave.IsComplete()) scriptedWaves.Remove(wave);
+            if (wave.IsComplete()) 
+                scriptedWaves.Remove(wave);
         }
 
         //remove dead meteors
@@ -140,7 +138,7 @@ public class MeteorManager
         }
     }
 
-    public void LoadWave(string pathname)
+    public void LoadWave(string pathname, long timeIndexOffset = 0)
     {
         MeteorWave wave = new MeteorWave();
         wave.LastSpawnTimeIndex = TimeSpan.Zero;
@@ -163,11 +161,34 @@ public class MeteorManager
                 }
                 angle = MathHelper.ToRadians(float.Parse(lineData[1]));
                 Meteor meteor = new Meteor(angle);
-                wave.ScriptedMeteors.Add(new ScriptedMeteor(time, meteor));
+                wave.ScriptedMeteors.Add(new ScriptedMeteor(time + timeIndexOffset, meteor));
             }
         }
 
         scriptedWaves.Add(wave);
+    }
+
+    public void LoadLevel(string pathname)
+    {
+        using (StreamReader sr = new StreamReader(pathname))
+        {
+            while (!sr.EndOfStream)
+            {
+                string line = sr.ReadLine();
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
+
+                string[] lineData = line.Split(' ');
+
+                long time;
+                if (!long.TryParse(lineData[0], out time))
+                {
+                    throw new Exception("Error loading wave \"" + pathname + "\". Expected format: <time index in ms> <wave file>");
+                }
+
+                string wavefile = lineData[1].Replace("\"", "");
+                LoadWave(wavefile, time);
+            }
+        }
     }
 
     public void OffsetAngles(float angle)
