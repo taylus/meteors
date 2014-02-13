@@ -16,3 +16,9 @@
 0 300
 0 320
 0 340
+
+#random meteors
+1000 random 100
+
+#turn off random meteors after a few seconds
+10000 random off

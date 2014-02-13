@@ -6,41 +6,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-public struct ScriptedMeteor
-{
-    public long TimeIndex;
-    public Meteor Meteor;
-
-    public ScriptedMeteor(long time, Meteor meteor)
-    {
-        TimeIndex = time;
-        Meteor = meteor;
-    }
-}
-
-//think of MeteorWaves like a song
-//a time index window slides over the notes and spawns them as meteors
-public class MeteorWave
-{
-    public List<ScriptedMeteor> ScriptedMeteors;
-    public TimeSpan LastSpawnTimeIndex;
-    public TimeSpan CurrentSpawnTimeIndex;
-
-    //determines, removes, and returns the meteors to spawn given this wave's current and last time indexes
-    public List<ScriptedMeteor> GetMeteorsToSpawn()
-    {
-        var meteorsToSpawn = ScriptedMeteors.Where(m => m.TimeIndex < CurrentSpawnTimeIndex.TotalMilliseconds).ToList();
-        meteorsToSpawn.ForEach(m => ScriptedMeteors.Remove(m));
-        return meteorsToSpawn;
-    }
-
-    //returns true if all meteors in this wave have been spawned
-    public bool IsComplete()
-    {
-        return ScriptedMeteors.Count <= 0;
-    }
-}
-
 /// <summary>
 /// Manages a list of meteors and allows all to be updated and drawn at once.
 /// </summary>
@@ -85,9 +50,25 @@ public class MeteorManager
             //advance the current time by however much time elapsed since the last update
             wave.CurrentSpawnTimeIndex += curTime.ElapsedGameTime;
 
-            //determine which meteors to spawn
+            //spawn meteors
             List<ScriptedMeteor> meteorsToSpawn = wave.GetMeteorsToSpawn();
             activeMeteors.AddRange(meteorsToSpawn.Select(m => m.Meteor));
+
+            //turn on/off random spawns
+            ScriptedRandom? random = wave.GetRandomSetting();
+            if (random != null)
+            {
+                if (random.Value.SpawnInterval != null)
+                {
+                    IsRandomActive = true;
+                    SpawnInterval = random.Value.SpawnInterval.Value;
+                }
+                else
+                {
+                    IsRandomActive = false;
+                }
+            }
+
             wave.LastSpawnTimeIndex = wave.CurrentSpawnTimeIndex;
         }
 
@@ -105,9 +86,6 @@ public class MeteorManager
             Meteor m = activeMeteors[i];
             m.Update();
             if (m.MarkedForDeletion) activeMeteors.Remove(m);
-
-            //TODO: do something about draw order so dust clouds are always drawn over new meteors?
-            //need to draw them as separate objects, on top of player and other falling meteors
         }
     }
 
@@ -126,6 +104,8 @@ public class MeteorManager
 
             string intervalText = String.Format("Interval: {0} ms", SpawnInterval.TotalMilliseconds);
             Vector2 textSize = BaseGame.Font.MeasureString(intervalText);
+            string randomIndicator = IsRandomActive ? "On" : "Off";
+            sb.DrawString(BaseGame.Font, string.Format("Random: {0}", randomIndicator), new Vector2(screen.Width - textSize.X - 2, screen.Height - textSize.Y * 2), Color.White);
             sb.DrawString(BaseGame.Font, intervalText, new Vector2(screen.Width - textSize.X - 2, screen.Height - textSize.Y), Color.White);
         }
     }
@@ -144,6 +124,7 @@ public class MeteorManager
         wave.LastSpawnTimeIndex = TimeSpan.Zero;
         wave.CurrentSpawnTimeIndex = TimeSpan.Zero;
         wave.ScriptedMeteors = new List<ScriptedMeteor>();
+        wave.RandomSettings = new List<ScriptedRandom>();
 
         using (StreamReader sr = new StreamReader(pathname))
         {
@@ -154,14 +135,38 @@ public class MeteorManager
 
                 string[] lineData = line.Split(' ');
 
-                long time; float angle;
-                if (!long.TryParse(lineData[0], out time) || !float.TryParse(lineData[1], out angle))
+                long time;
+                if (!long.TryParse(lineData[0], out time))
                 {
-                    throw new Exception("Error loading wave \"" + pathname + "\". Expected format: <time index in ms> <angle in degrees>");
+                    throw new Exception("Error loading line in wave \"" + pathname + "\". Expected <time index in ms>");
                 }
-                angle = MathHelper.ToRadians(float.Parse(lineData[1]));
-                Meteor meteor = new Meteor(angle);
-                wave.ScriptedMeteors.Add(new ScriptedMeteor(time + timeIndexOffset, meteor));
+
+                //expecting lines like "1000 random 100" to start spawning meteors 100 ms apart 1 second into this wave
+                //or "1000 random off" to stop spawning random meteors 1 second into this wave
+                if(string.Equals(lineData[1], "random", StringComparison.OrdinalIgnoreCase))
+                {
+                    int spawnInterval;
+                    if (lineData.Length > 2 && int.TryParse(lineData[2], out spawnInterval))
+                    {
+                        wave.RandomSettings.Add(new ScriptedRandom(time + timeIndexOffset, TimeSpan.FromMilliseconds(spawnInterval)));
+                    }
+                    else
+                    {
+                        wave.RandomSettings.Add(new ScriptedRandom(time + timeIndexOffset, null));
+                    }
+                }
+                else
+                {
+                    float angle;
+                    if (!float.TryParse(lineData[1], out angle))
+                    {
+                        throw new Exception("Error loading meteor in wave \"" + pathname + "\". Expected format: <time index in ms> <angle in degrees>");
+                    }
+
+                    angle = MathHelper.ToRadians(float.Parse(lineData[1]));
+                    Meteor meteor = new Meteor(angle);
+                    wave.ScriptedMeteors.Add(new ScriptedMeteor(time + timeIndexOffset, meteor));
+                }
             }
         }
 
