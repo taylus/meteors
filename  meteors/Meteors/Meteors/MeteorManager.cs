@@ -13,11 +13,11 @@ public class MeteorManager
 {
     public int MaxRandomMeteors { get; set; }
     public TimeSpan SpawnInterval { get; set; }
-    public int Count { get { return activeMeteors.Count; } }
+    public int Count { get { return meteors.Count; } }
     public bool IsRandomActive { get; set; }
     public bool IsScriptActive { get; set; }
 
-    private List<Meteor> activeMeteors = new List<Meteor>();
+    private List<Meteor> meteors = new List<Meteor>();
     private TimeSpan lastRandomSpawnTime;
 
     private List<MeteorWave> scriptedWaves = new List<MeteorWave>();
@@ -34,13 +34,13 @@ public class MeteorManager
     {
         if (IsRandomActive)
         {
-            if (activeMeteors.Count < MaxRandomMeteors)
+            if (meteors.Count < MaxRandomMeteors)
             {
                 TimeSpan timeSinceLastSpawn = curTime.TotalGameTime.Subtract(lastRandomSpawnTime);
                 if (timeSinceLastSpawn >= SpawnInterval)
                 {
                     //spawn a meteor
-                    activeMeteors.Add(new Meteor());
+                    meteors.Add(new Meteor());
                     lastRandomSpawnTime = curTime.TotalGameTime;
                 }
             }
@@ -52,7 +52,7 @@ public class MeteorManager
 
             //spawn meteors
             List<ScriptedMeteor> meteorsToSpawn = wave.GetMeteorsToSpawn();
-            activeMeteors.AddRange(meteorsToSpawn.Select(m => m.Meteor));
+            meteors.AddRange(meteorsToSpawn.Select(m => m.Meteor));
 
             //turn on/off random spawns
             ScriptedRandom? random = wave.GetRandomSetting();
@@ -81,17 +81,17 @@ public class MeteorManager
         }
 
         //remove dead meteors
-        for (int i = activeMeteors.Count - 1; i >= 0; i--)
+        for (int i = meteors.Count - 1; i >= 0; i--)
         {
-            Meteor m = activeMeteors[i];
+            Meteor m = meteors[i];
             m.Update();
-            if (m.MarkedForDeletion) activeMeteors.Remove(m);
+            if (m.MarkedForDeletion) meteors.Remove(m);
         }
     }
 
     public void DrawMeteors(SpriteBatch sb, bool debug = false)
     {
-        foreach (Meteor m in activeMeteors)
+        foreach (Meteor m in meteors)
         {
             if(m.Active) m.Draw(sb);
         }
@@ -100,7 +100,7 @@ public class MeteorManager
         {
             Viewport screen = sb.GraphicsDevice.Viewport;
             sb.DrawString(BaseGame.Font, string.Format("Waves: {0}", scriptedWaves.Count), new Vector2(2, screen.Height - 2 * BaseGame.Font.LineSpacing), Color.White);
-            sb.DrawString(BaseGame.Font, string.Format("Meteors: {0}", activeMeteors.Count), new Vector2(2, screen.Height - BaseGame.Font.LineSpacing), Color.White);
+            sb.DrawString(BaseGame.Font, string.Format("Meteors: {0}", meteors.Count), new Vector2(2, screen.Height - BaseGame.Font.LineSpacing), Color.White);
 
             string intervalText = String.Format("Interval: {0} ms", SpawnInterval.TotalMilliseconds);
             Vector2 textSize = BaseGame.Font.MeasureString(intervalText);
@@ -112,7 +112,7 @@ public class MeteorManager
 
     public void DrawDustClouds(SpriteBatch sb)
     {
-        foreach (Meteor m in activeMeteors)
+        foreach (Meteor m in meteors)
         {
             if(!m.Active) m.Draw(sb);
         }
@@ -198,7 +198,7 @@ public class MeteorManager
 
     public void OffsetAngles(float angle)
     {
-        activeMeteors.ForEach(m => m.Angle += angle);
+        meteors.ForEach(m => m.Angle += angle);
         foreach (MeteorWave wave in scriptedWaves)
         {
             wave.ScriptedMeteors.ForEach(m => m.Meteor.Angle += angle);
