@@ -62,7 +62,35 @@ public class MeteorsGame : BaseGame
         curMouse = Mouse.GetState();
 
         if (curKeyboard.IsKeyDown(Keys.Escape)) this.Exit();
+        HandleDebugInput();
 
+        if (Keyboard.GetState().IsKeyDown(Keys.D))
+        {
+            planet.Angle -= Player.PLAYER_ROT_SPEED;
+            meteors.OffsetAngles(-Player.PLAYER_ROT_SPEED);
+            stars.OffsetAngles(-Player.PLAYER_ROT_SPEED);
+        }
+        if (Keyboard.GetState().IsKeyDown(Keys.A))
+        {
+            planet.Angle += Player.PLAYER_ROT_SPEED;
+            meteors.OffsetAngles(Player.PLAYER_ROT_SPEED);
+            stars.OffsetAngles(Player.PLAYER_ROT_SPEED);
+        }
+
+        player.Update();
+        meteors.Update(gameTime);
+        stars.Update(gameTime);
+
+        //don't accelerate the meteor spawn rate while a star is waiting to be picked up
+        if (stars.Max > 0 && !stars.HasActiveStar()) accelerateMeteors.Update(gameTime);
+
+        prevKeyboard = curKeyboard;
+        prevMouse = curMouse;
+        base.Update(gameTime);
+    }
+
+    private void HandleDebugInput()
+    {
         if (KeyPressedThisFrame(Keys.Tab))
         {
             player.Sprite.Color = Color.White;
@@ -95,19 +123,6 @@ public class MeteorsGame : BaseGame
             meteors.LoadLevel(@"levels\1.txt");
         }
 
-        if (Keyboard.GetState().IsKeyDown(Keys.D))
-        {
-            planet.Angle -= Player.PLAYER_ROT_SPEED;
-            meteors.OffsetAngles(-Player.PLAYER_ROT_SPEED);
-            stars.OffsetAngles(-Player.PLAYER_ROT_SPEED);
-        }
-        if (Keyboard.GetState().IsKeyDown(Keys.A))
-        {
-            planet.Angle += Player.PLAYER_ROT_SPEED;
-            meteors.OffsetAngles(Player.PLAYER_ROT_SPEED);
-            stars.OffsetAngles(Player.PLAYER_ROT_SPEED);
-        }
-
         if (ScrollDownThisFrame() && meteors.SpawnInterval > TimeSpan.Zero)
         {
             meteors.SpawnInterval -= TimeSpan.FromMilliseconds(10);
@@ -116,17 +131,6 @@ public class MeteorsGame : BaseGame
         {
             meteors.SpawnInterval += TimeSpan.FromMilliseconds(10);
         }
-
-        player.Update();
-        meteors.Update(gameTime);
-        stars.Update(gameTime);
-
-        //don't accelerate the meteor spawn rate while a star is waiting to be picked up
-        if (stars.Max > 0 && !stars.HasActiveStar()) accelerateMeteors.Update(gameTime);
-
-        prevKeyboard = curKeyboard;
-        prevMouse = curMouse;
-        base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
