@@ -11,6 +11,7 @@ public class Star : FallingObject
         FallSpeed = 5.0f;
     }
 
+    //TODO: make stars disappear if the player doesn't pick them up for a while
     public override void Update()
     {
         base.Update();

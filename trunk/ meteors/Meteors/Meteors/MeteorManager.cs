@@ -15,7 +15,6 @@ public class MeteorManager
     public TimeSpan SpawnInterval { get; set; }
     public int Count { get { return meteors.Count; } }
     public bool IsRandomActive { get; set; }
-    public bool IsScriptActive { get; set; }
 
     private List<Meteor> meteors = new List<Meteor>();
     private TimeSpan lastRandomSpawnTime;
@@ -27,7 +26,6 @@ public class MeteorManager
         MaxRandomMeteors = max;
         SpawnInterval = spawnInterval;
         IsRandomActive = false;
-        IsScriptActive = false;
     }
 
     public void Update(GameTime curTime)
@@ -104,7 +102,9 @@ public class MeteorManager
 
             string intervalText = String.Format("Interval: {0} ms", SpawnInterval.TotalMilliseconds);
             Vector2 textSize = BaseGame.Font.MeasureString(intervalText);
+            string waveSpawningIndicator = IsWaveSpawning() ? "On" : "Off";
             string randomIndicator = IsRandomActive ? "On" : "Off";
+            sb.DrawString(BaseGame.Font, string.Format("Wave: {0}", waveSpawningIndicator), new Vector2(screen.Width - textSize.X - 2, screen.Height - textSize.Y * 3), Color.White);
             sb.DrawString(BaseGame.Font, string.Format("Random: {0}", randomIndicator), new Vector2(screen.Width - textSize.X - 2, screen.Height - textSize.Y * 2), Color.White);
             sb.DrawString(BaseGame.Font, intervalText, new Vector2(screen.Width - textSize.X - 2, screen.Height - textSize.Y), Color.White);
         }
@@ -203,5 +203,10 @@ public class MeteorManager
         {
             wave.ScriptedMeteors.ForEach(m => m.Meteor.Angle += angle);
         }
+    }
+
+    public bool IsWaveSpawning()
+    {
+        return scriptedWaves.Count > 0 && scriptedWaves.Any(w => w.ScriptedMeteors.Count > 0);
     }
 }
