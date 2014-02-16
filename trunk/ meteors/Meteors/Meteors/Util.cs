@@ -102,9 +102,8 @@ public static class Util
         return GetPointOnCircle(circle, Random(0, MathHelper.TwoPi));
     }
 
-    public static void DrawRectangle(Rectangle rect, Color color)
+    public static void DrawRectangle(SpriteBatch sb, Rectangle rect, Color color)
     {
-        SpriteBatch sb = ServiceLocator.Get<SpriteBatch>();
         if (dummyTexture == null)
         {
             dummyTexture = new Texture2D(sb.GraphicsDevice, 1, 1);
@@ -164,5 +163,10 @@ public static class Util
         float dy = c2.Center.Y - c1.Center.Y;
         float radii = c1.Radius + c2.Radius;
         return ((dx * dx) + (dy * dy) < (radii * radii));
+    }
+
+    public static Vector2 Round(this Vector2 v)
+    {
+        return new Vector2((float)Math.Round(v.X), (float)Math.Round(v.Y));
     }
 }
