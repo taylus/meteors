@@ -17,11 +17,12 @@ public class StarManager
     public int Count { get { return stars.Count; } }
 
     private List<Star> stars = new List<Star>();
-    private TimeSpan lastSpawnTime;
+    private TimeSpan untilNextSpawn;
 
     public StarManager(int max, TimeSpan spawnInterval)
     {
         Max = max;
+        untilNextSpawn = spawnInterval;
         SpawnInterval = spawnInterval;
         Enabled = true;
     }
@@ -32,12 +33,12 @@ public class StarManager
 
         if (stars.Count < Max)
         {
-            TimeSpan timeSinceLastSpawn = curTime.TotalGameTime.Subtract(lastSpawnTime);
-            if (timeSinceLastSpawn >= SpawnInterval)
+            untilNextSpawn -= curTime.ElapsedGameTime;
+            if (untilNextSpawn <= TimeSpan.Zero)
             {
                 //spawn a star
                 stars.Add(new Star());
-                lastSpawnTime = curTime.TotalGameTime;
+                untilNextSpawn = SpawnInterval;
             }
         }
 
@@ -49,7 +50,7 @@ public class StarManager
             if (s.MarkedForDeletion)
             {
                 stars.Remove(s);
-                lastSpawnTime = curTime.TotalGameTime;
+                untilNextSpawn = SpawnInterval;
             }
         }
     }

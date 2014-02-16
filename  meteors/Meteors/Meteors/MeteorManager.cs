@@ -209,4 +209,9 @@ public class MeteorManager
     {
         return scriptedWaves.Count > 0 && scriptedWaves.Any(w => w.ScriptedMeteors.Count > 0);
     }
+
+    public void Clear()
+    {
+        meteors.Clear();
+    }
 }
