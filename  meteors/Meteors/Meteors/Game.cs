@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -24,6 +25,8 @@ public class MeteorsGame : BaseGame
 
     private const int MAX_STARS = 1;
     private static readonly TimeSpan STAR_SPAWN_INTERVAL = TimeSpan.FromSeconds(5);
+
+    private TimeSpan untilNextWave = TimeSpan.FromSeconds(5);
 
     public MeteorsGame()
     {
@@ -72,6 +75,9 @@ public class MeteorsGame : BaseGame
             stars.OffsetAngles(Player.PLAYER_ROT_SPEED);
         }
 
+        //comment out to make the game stop playing; useful when testing new waves
+        UpdateGameBehavior(gameTime);
+
         player.Update();
         meteors.Update(gameTime);
         stars.Update(gameTime);
@@ -89,21 +95,11 @@ public class MeteorsGame : BaseGame
         }
         if (KeyPressedThisFrame(Keys.Space))
         {
-            if (meteors.IsRandomActive)
-            {
-                meteors.IsRandomActive = false;
-                meteors.IsScriptActive = false;
-            }
-            else
-            {
-                meteors.IsRandomActive = true;
-                meteors.IsScriptActive = true;
-            }
+            meteors.IsRandomActive = !meteors.IsRandomActive;
         }
         if (KeyPressedThisFrame(Keys.D1))
         {
-            //meteors.IsRandomActive = false;
-            meteors.LoadWave(@"waves\spirals.txt");
+            meteors.LoadWave(@"waves\hemispiral.txt");
         }
         if (KeyPressedThisFrame(Keys.D2))
         {
@@ -111,8 +107,7 @@ public class MeteorsGame : BaseGame
         }
         if (KeyPressedThisFrame(Keys.D3))
         {
-            //meteors.LoadWave(@"waves\quadrants.txt");
-            meteors.LoadLevel(@"levels\1.txt");
+            meteors.LoadWave(@"waves\quadrants.txt");
         }
 
         if (ScrollUpThisFrame() && meteors.SpawnInterval > TimeSpan.Zero)
@@ -140,5 +135,37 @@ public class MeteorsGame : BaseGame
         spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    //current game behavior:
+    //spawn random meteors for a random amount of time
+    //disable random meteors and spawn a scripted wave at random
+    //re-enable random meteors once the wave finishes spawning
+    //repeat
+    private void UpdateGameBehavior(GameTime gameTime)
+    {
+        untilNextWave -= gameTime.ElapsedGameTime;
+        if (untilNextWave <= TimeSpan.Zero)
+        {
+            if (!meteors.IsWaveSpawning())
+            {
+                meteors.IsRandomActive = false;
+                meteors.LoadWave(GetRandomWave());
+            }
+
+            //back off and wait again, even if we didn't load a wave
+            untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
+        }
+        else if (!meteors.IsWaveSpawning())
+        {
+            //enable random meteors if time remains until the next wave, and we're not already spawning one
+            meteors.IsRandomActive = true;
+        }
+    }
+
+    private string GetRandomWave()
+    {
+        string[] files = Directory.GetFiles("waves");
+        return files[Util.Random(0, files.Length)];
     }
 }
