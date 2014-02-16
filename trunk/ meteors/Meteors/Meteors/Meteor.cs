@@ -2,29 +2,9 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-public class Meteor
+public class Meteor : FallingObject
 {
-    public Sprite Sprite { get; set; }
-    public bool Active { get; set; }
-    public bool MarkedForDeletion { get; set; }
-    public float Angle
-    {
-        get
-        {
-            return Sprite.Rotation;
-        }
-        set
-        {
-            Sprite.Rotation = value;
-        }
-    }
-
-    //use a smaller bounding rect on meteors
-    public RotatedRectangle BoundingRectangle { get { return Sprite.RotatedRectangle.Scale(0.8f, 3, 1); } }
-
-    private float orbitRadius;
-    private const float FALL_SPEED = 2.0f;
-    private static Texture2D dustTexture;
+    private static Texture2D dustTexture = BaseGame.LoadTexture("dust");
 
     public Meteor(float? angle = null)
     {
@@ -37,30 +17,16 @@ public class Meteor
         {
             Angle = angle.Value;
         }
-        orbitRadius = ServiceLocator.Get<Planet>().OortCloud.Radius;
-        Active = true;
-        MarkedForDeletion = false;
+        FallSpeed = 2.0f;
     }
 
-    public void Draw(SpriteBatch sb)
+    public override void Update()
     {
-        Sprite.Draw(sb);
-        //Util.DrawRectangle(BoundingRectangle, new Color(128, 0, 0, 32));
+        base.Update();
 
-        //lazy load a single, shared dust texture
-        if (dustTexture == null) dustTexture = BaseGame.LoadTexture("dust");
-    }
-
-    public void Update()
-    {
-        //meteor is active, moving towards its target
         if (Active)
         {
-            //make meteor fall by decreasing orbit radius
-            orbitRadius -= FALL_SPEED;
-
             //planet collision
-            //TODO: play sound (add sound system to ServiceLocator)
             if (Util.CircleCollision(ServiceLocator.Get<Planet>().Bounds, new Circle(Sprite.Position, Sprite.ScaledWidth / 3)))
             {
                 Active = false;
@@ -86,15 +52,5 @@ public class Meteor
             Sprite.Scale += 0.0015f;
             if (Sprite.Alpha <= 0) MarkedForDeletion = true;
         }
-
-        CalculatePosition();
-    }
-
-    //calculates the meteor's current position given the planet and the meteor's current orbit
-    private void CalculatePosition()
-    {
-        Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
-        Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
-        Sprite.Position = newPosition;
     }
 }

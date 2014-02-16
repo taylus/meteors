@@ -17,17 +17,13 @@ public class MeteorsGame : BaseGame
     private Player player;
     private Planet planet;
     private MeteorManager meteors;
-    private TimerCallback accelerateMeteors;
     private StarManager stars;
 
     private const int MAX_METEORS = 250;
     private static readonly TimeSpan INITIAL_METEOR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(150);
-    private static readonly TimeSpan MIN_METEOR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(50);
-    private static readonly TimeSpan METEOR_ACCELERATION_INTERVAL = TimeSpan.FromMilliseconds(2500);
-    private static readonly TimeSpan METEOR_ACCELERATION_STEP = TimeSpan.FromMilliseconds(10);
 
-    private const int MAX_STARS = 0;
-    private static readonly TimeSpan STAR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(5000);
+    private const int MAX_STARS = 1;
+    private static readonly TimeSpan STAR_SPAWN_INTERVAL = TimeSpan.FromSeconds(5);
 
     public MeteorsGame()
     {
@@ -49,7 +45,6 @@ public class MeteorsGame : BaseGame
         ServiceLocator.Register<Planet>(planet);
 
         meteors = new MeteorManager(MAX_METEORS, INITIAL_METEOR_SPAWN_INTERVAL) { IsRandomActive = false };
-        accelerateMeteors = new TimerCallback(AccelerateMeteorSpawnRate, METEOR_ACCELERATION_INTERVAL);
 
         stars = new StarManager(MAX_STARS, STAR_SPAWN_INTERVAL);
     }
@@ -80,9 +75,6 @@ public class MeteorsGame : BaseGame
         player.Update();
         meteors.Update(gameTime);
         stars.Update(gameTime);
-
-        //don't accelerate the meteor spawn rate while a star is waiting to be picked up
-        if (stars.Max > 0 && !stars.HasActiveStar()) accelerateMeteors.Update(gameTime);
 
         prevKeyboard = curKeyboard;
         prevMouse = curMouse;
@@ -123,11 +115,11 @@ public class MeteorsGame : BaseGame
             meteors.LoadLevel(@"levels\1.txt");
         }
 
-        if (ScrollDownThisFrame() && meteors.SpawnInterval > TimeSpan.Zero)
+        if (ScrollUpThisFrame() && meteors.SpawnInterval > TimeSpan.Zero)
         {
             meteors.SpawnInterval -= TimeSpan.FromMilliseconds(10);
         }
-        else if (ScrollUpThisFrame())
+        else if (ScrollDownThisFrame())
         {
             meteors.SpawnInterval += TimeSpan.FromMilliseconds(10);
         }
@@ -148,14 +140,5 @@ public class MeteorsGame : BaseGame
         spriteBatch.End();
 
         base.Draw(gameTime);
-    }
-
-    //timer callback function to slowly speed up the spawn rate of meteors at a constant speed
-    private void AccelerateMeteorSpawnRate()
-    {
-        if (meteors.SpawnInterval > MIN_METEOR_SPAWN_INTERVAL)
-        {
-            meteors.SpawnInterval = meteors.SpawnInterval.Subtract(METEOR_ACCELERATION_STEP);            
-        }
     }
 }
