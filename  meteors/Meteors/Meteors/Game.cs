@@ -14,30 +14,34 @@ using Microsoft.Xna.Framework.Media;
 //avoid meteors that fall towards the planet and explode
 public class MeteorsGame : BaseGame
 {
-    private Texture2D background;
-    private Player player;
-    private Planet planet;
-    private MeteorManager meteors;
-    private StarManager stars;
+    private static Texture2D background;
+    private static Player player;
+    private static Planet planet;
+    private static MeteorManager meteors;
+    private static StarManager stars;
+    private static StarPowerMeter starMeter;
 
     private const int MAX_METEORS = 250;
-    private static readonly TimeSpan TITLE_SCREEN_METEOR_SPAWN_INTERVAL = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan INITIAL_METEOR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(150);
+    private static readonly TimeSpan INITIAL_METEOR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(160);
 
     private const int MAX_STARS = 1;
     private static readonly TimeSpan STAR_SPAWN_INTERVAL = TimeSpan.FromSeconds(10);
 
-    private TimeSpan untilNextWave;
+    private static TimeSpan untilNextWave;
 
-    private SpriteFont titleFont;
-    private string gameTitle = "OMG Meteors!";
-    public static bool TitleScreen = true;
+    private static SpriteFont titleFont;
+    private const string GAME_TITLE = "OMG Meteors!";
+    private const string NEXT_LEVEL = "Level Up!";
+    private static string titleScreenText;
+    public static bool TitleScreen { get; private set; }
 
     public MeteorsGame()
     {
         IsMouseVisible = true;
         Content.RootDirectory = "Content";
-        Window.Title = gameTitle;
+        Window.Title = GAME_TITLE;
+        titleScreenText = GAME_TITLE;
+        TitleScreen = true;
     }
 
     protected override void LoadContent()
@@ -53,9 +57,10 @@ public class MeteorsGame : BaseGame
         planet = new Planet(new Sprite("planet2", 1.25f), GameWindow.Center.ToVector2(), 600);
         ServiceLocator.Register<Planet>(planet);
 
-        meteors = new MeteorManager(MAX_METEORS, TITLE_SCREEN_METEOR_SPAWN_INTERVAL) { IsRandomActive = true };
+        meteors = new MeteorManager(MAX_METEORS, INITIAL_METEOR_SPAWN_INTERVAL) { IsRandomActive = true };
 
         stars = new StarManager(MAX_STARS, STAR_SPAWN_INTERVAL);
+        starMeter = new StarPowerMeter();
     }
 
     protected override void Update(GameTime gameTime)
@@ -69,25 +74,24 @@ public class MeteorsGame : BaseGame
 
         if (TitleScreen)
         {
-            if (Keyboard.GetState().GetPressedKeys().Length > 0)
+            if (AnyKeyPressedThisFrame() ||
+                curMouse.LeftButton == ButtonState.Pressed ||
+                curMouse.RightButton == ButtonState.Pressed)
             {
-                TitleScreen = false;
-                meteors.Clear();
-                meteors.SpawnInterval = INITIAL_METEOR_SPAWN_INTERVAL;
-                untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
+                StartGameFromTitleScreen();
             }
         }
         else
         {
-            HandleDebugInput();
+            //HandleDebugInput();
 
-            if (Keyboard.GetState().IsKeyDown(Keys.D))
+            if (curKeyboard.IsKeyDown(Keys.D))
             {
                 planet.Angle -= Player.PLAYER_ROT_SPEED;
                 meteors.OffsetAngles(-Player.PLAYER_ROT_SPEED);
                 stars.OffsetAngles(-Player.PLAYER_ROT_SPEED);
             }
-            if (Keyboard.GetState().IsKeyDown(Keys.A))
+            if (curKeyboard.IsKeyDown(Keys.A))
             {
                 planet.Angle += Player.PLAYER_ROT_SPEED;
                 meteors.OffsetAngles(Player.PLAYER_ROT_SPEED);
@@ -153,9 +157,9 @@ public class MeteorsGame : BaseGame
         if (TitleScreen)
         {
             Util.DrawRectangle(spriteBatch, GameWindow, Color.Lerp(Color.Black, Color.Transparent, 0.5f));
-            Vector2 measureTitleString = titleFont.MeasureString(gameTitle);
+            Vector2 measureTitleString = titleFont.MeasureString(titleScreenText);
             Vector2 titleStringPosition = new Vector2(GameWidth / 2 - measureTitleString.X / 2, 70).Round();
-            spriteBatch.DrawString(titleFont, "OMG Meteors!", titleStringPosition, Color.White);
+            spriteBatch.DrawString(titleFont, titleScreenText, titleStringPosition, Color.White);
 
             string instructions = "Press any key!";
             Vector2 measureInstructionString = Font.MeasureString(instructions);
@@ -166,6 +170,7 @@ public class MeteorsGame : BaseGame
         {
             stars.Draw(spriteBatch, true);
             player.Draw(spriteBatch);
+            starMeter.Draw(spriteBatch, player.StarPower);
         }
         meteors.DrawDustClouds(spriteBatch);
         spriteBatch.End();
@@ -203,5 +208,28 @@ public class MeteorsGame : BaseGame
     {
         string[] files = Directory.GetFiles("waves");
         return files[Util.Random(0, files.Length)];
+    }
+
+    public static void StartGameFromTitleScreen()
+    {
+        TitleScreen = false;
+        meteors.Clear();
+        stars.Clear();
+        meteors.SpawnInterval -= TimeSpan.FromMilliseconds(10);
+        untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
+    }
+
+    public static void EndGameToTitleScreen()
+    {
+        TitleScreen = true;
+        titleScreenText = GAME_TITLE;
+        meteors.SpawnInterval = INITIAL_METEOR_SPAWN_INTERVAL;
+    }
+
+    public static void NextLevel()
+    {
+        TitleScreen = true;
+        titleScreenText = NEXT_LEVEL;
+        player.StarPower = 0;
     }
 }

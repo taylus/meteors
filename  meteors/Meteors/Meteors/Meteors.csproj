@@ -113,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseGame.cs" />
+    <Compile Include="StarPowerMeter.cs" />
     <Compile Include="FallingObject.cs" />
     <Compile Include="MeteorWave.cs" />
     <Compile Include="StarManager.cs" />

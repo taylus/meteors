@@ -29,20 +29,22 @@ public class Meteor : FallingObject
             //planet collision
             if (Util.CircleCollision(ServiceLocator.Get<Planet>().Bounds, new Circle(Sprite.Position, Sprite.ScaledWidth / 3)))
             {
-                Active = false;
-                Sprite.Texture = dustTexture;
-                Sprite.Color = Color.SandyBrown;
-                Sprite.Scale = 0.35f;
-                Sprite.Alpha = 0.6f;
+                BecomeDustCloud();
                 return;
             }
 
             //player collision
             Player p = ServiceLocator.Get<Player>();
-            if (p.BoundingRectangle.Intersects(BoundingRectangle))
+            if (!MeteorsGame.TitleScreen && p.BoundingRectangle.Intersects(BoundingRectangle))
             {
-                MarkedForDeletion = true;
-                p.Sprite.Color = Util.RandomColor();
+                BecomeDustCloud();
+                //p.Sprite.Color = Util.RandomColor();
+                p.StarPower--;
+                if (p.StarPower < 0)
+                {
+                    p.StarPower = 0;
+                    MeteorsGame.EndGameToTitleScreen();
+                }
             }
         }
         //meteor has hit the planet and exploded, slowly fade out then mark for deletion
@@ -52,5 +54,14 @@ public class Meteor : FallingObject
             Sprite.Scale += 0.0015f;
             if (Sprite.Alpha <= 0) MarkedForDeletion = true;
         }
+    }
+
+    private void BecomeDustCloud()
+    {
+        Active = false;
+        Sprite.Texture = dustTexture;
+        Sprite.Color = Color.SandyBrown;
+        Sprite.Scale = 0.35f;
+        Sprite.Alpha = 0.6f;
     }
 }

@@ -26,9 +26,15 @@ public class Star : FallingObject
         }
 
         //player collision
-        if (ServiceLocator.Get<Player>().BoundingRectangle.Intersects(BoundingRectangle))
+        Player player = ServiceLocator.Get<Player>();
+        if (!MarkedForDeletion && player.BoundingRectangle.Intersects(BoundingRectangle))
         {
             MarkedForDeletion = true;
+            player.StarPower++;
+            if (player.StarPower >= StarPowerMeter.MAX_POWER)
+            {
+                MeteorsGame.NextLevel();
+            }
         }
     }
 }

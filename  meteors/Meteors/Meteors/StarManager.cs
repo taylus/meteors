@@ -70,4 +70,9 @@ public class StarManager
     {
         stars.ForEach(s => s.Angle += angle);
     }
+
+    public void Clear()
+    {
+        stars.Clear();
+    }
 }
