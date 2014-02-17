@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -57,6 +58,14 @@ public class BaseGame : Game
         graphicsDevice = GraphicsDevice;
         spriteBatch = new SpriteBatch(GraphicsDevice);
         Font = Content.Load<SpriteFont>("font");
+    }
+
+    public bool AnyKeyPressedThisFrame()
+    {
+        Keys[] prevKeys = prevKeyboard.GetPressedKeys();
+        Keys[] curKeys = curKeyboard.GetPressedKeys();
+
+        return prevKeys.Union(curKeys).Count() != prevKeys.Count();
     }
 
     public bool KeyPressedThisFrame(Keys key)

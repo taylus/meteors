@@ -9,6 +9,7 @@ public class Player
 {
     public Sprite Sprite { get; private set; }
     public float Angle { get; set; }
+    public int StarPower { get; set; }
 
     //opportunity for inheritance once all drawable objects inherit together
     //default bounding rect to cover the whole sprite, and some objects can override it smaller
