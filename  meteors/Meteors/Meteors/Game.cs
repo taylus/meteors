@@ -29,9 +29,13 @@ public class MeteorsGame : BaseGame
 
     private static TimeSpan untilNextWave;
 
+    private static readonly TimeSpan gameOverTitleScreenInactiveTime = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan nextLevelTitleScreenInactiveTime = TimeSpan.FromSeconds(1);
+    private static TimeSpan untilTitleScreenActive;
+
     private const string instructions = "Press any key!";
     private static TimeSpan untilInstructionsBlink = TimeSpan.FromMilliseconds(700);
-    private static bool instructionsVisible = true;
+    private static bool instructionsVisible = false;
 
     private static SpriteFont titleFont;
     private const string GAME_TITLE = "Meteor Madness!";
@@ -78,17 +82,24 @@ public class MeteorsGame : BaseGame
 
         if (TitleScreen)
         {
-            untilInstructionsBlink -= gameTime.ElapsedGameTime;
-            if (untilInstructionsBlink <= TimeSpan.Zero)
+            if (untilTitleScreenActive >= TimeSpan.Zero)
             {
-                instructionsVisible = !instructionsVisible;
-                untilInstructionsBlink = TimeSpan.FromMilliseconds(700);
+                untilTitleScreenActive -= gameTime.ElapsedGameTime;
             }
-            if (AnyKeyPressedThisFrame() ||
-                curMouse.LeftButton == ButtonState.Pressed ||
-                curMouse.RightButton == ButtonState.Pressed)
+            else
             {
-                StartGameFromTitleScreen();
+                untilInstructionsBlink -= gameTime.ElapsedGameTime;
+                if (untilInstructionsBlink <= TimeSpan.Zero)
+                {
+                    instructionsVisible = !instructionsVisible;
+                    untilInstructionsBlink = TimeSpan.FromMilliseconds(700);
+                }
+                if (AnyKeyPressedThisFrame() ||
+                    curMouse.LeftButton == ButtonState.Pressed ||
+                    curMouse.RightButton == ButtonState.Pressed)
+                {
+                    StartGameFromTitleScreen();
+                }
             }
         }
         else
@@ -238,6 +249,8 @@ public class MeteorsGame : BaseGame
     public static void EndGameToTitleScreen()
     {
         TitleScreen = true;
+        instructionsVisible = false;
+        untilTitleScreenActive = gameOverTitleScreenInactiveTime;
         titleScreenText = GAME_TITLE;
         meteors.SpawnInterval = INITIAL_METEOR_SPAWN_INTERVAL;
     }
@@ -245,6 +258,8 @@ public class MeteorsGame : BaseGame
     public static void NextLevel()
     {
         TitleScreen = true;
+        instructionsVisible = false;
+        untilTitleScreenActive = nextLevelTitleScreenInactiveTime;
         titleScreenText = NEXT_LEVEL;
         player.StarPower = 0;
     }
