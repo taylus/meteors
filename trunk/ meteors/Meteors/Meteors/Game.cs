@@ -29,8 +29,12 @@ public class MeteorsGame : BaseGame
 
     private static TimeSpan untilNextWave;
 
+    private const string instructions = "Press any key!";
+    private static TimeSpan untilInstructionsBlink = TimeSpan.FromMilliseconds(700);
+    private static bool instructionsVisible = true;
+
     private static SpriteFont titleFont;
-    private const string GAME_TITLE = "OMG Meteors!";
+    private const string GAME_TITLE = "Meteor Madness!";
     private const string NEXT_LEVEL = "Level Up!";
     private static string titleScreenText;
     public static bool TitleScreen { get; private set; }
@@ -74,6 +78,12 @@ public class MeteorsGame : BaseGame
 
         if (TitleScreen)
         {
+            untilInstructionsBlink -= gameTime.ElapsedGameTime;
+            if (untilInstructionsBlink <= TimeSpan.Zero)
+            {
+                instructionsVisible = !instructionsVisible;
+                untilInstructionsBlink = TimeSpan.FromMilliseconds(700);
+            }
             if (AnyKeyPressedThisFrame() ||
                 curMouse.LeftButton == ButtonState.Pressed ||
                 curMouse.RightButton == ButtonState.Pressed)
@@ -83,7 +93,7 @@ public class MeteorsGame : BaseGame
         }
         else
         {
-            //HandleDebugInput();
+            HandleDebugInput();
 
             if (curKeyboard.IsKeyDown(Keys.D))
             {
@@ -116,7 +126,7 @@ public class MeteorsGame : BaseGame
     {
         if (KeyPressedThisFrame(Keys.Tab))
         {
-            player.Sprite.Color = Color.White;
+            EndGameToTitleScreen();
         }
         if (KeyPressedThisFrame(Keys.Space))
         {
@@ -124,7 +134,9 @@ public class MeteorsGame : BaseGame
         }
         if (KeyPressedThisFrame(Keys.D1))
         {
-            meteors.LoadWave(@"waves\hemispiral.txt");
+            meteors.IsRandomActive = false;
+            meteors.LoadWave(@"waves\spirals.txt");
+            untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
         }
         if (KeyPressedThisFrame(Keys.D2))
         {
@@ -161,10 +173,12 @@ public class MeteorsGame : BaseGame
             Vector2 titleStringPosition = new Vector2(GameWidth / 2 - measureTitleString.X / 2, 70).Round();
             spriteBatch.DrawString(titleFont, titleScreenText, titleStringPosition, Color.White);
 
-            string instructions = "Press any key!";
-            Vector2 measureInstructionString = Font.MeasureString(instructions);
-            Vector2 instructionsStringPosition = new Vector2(GameWidth / 2 - measureInstructionString.X / 2, GameHeight - 120).Round();
-            spriteBatch.DrawString(Font, instructions, instructionsStringPosition, Color.White);
+            if (instructionsVisible)
+            {
+                Vector2 measureInstructionString = Font.MeasureString(instructions);
+                Vector2 instructionsStringPosition = new Vector2(GameWidth / 2 - measureInstructionString.X / 2, GameHeight - 120).Round();
+                spriteBatch.DrawString(Font, instructions, instructionsStringPosition, Color.White);
+            }
         }
         else
         {
@@ -195,7 +209,8 @@ public class MeteorsGame : BaseGame
             }
 
             //back off and wait again, even if we didn't load a wave
-            untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
+            //untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
+            untilNextWave = TimeSpan.FromSeconds(20);
         }
         else if (!meteors.IsWaveSpawning())
         {
@@ -216,7 +231,8 @@ public class MeteorsGame : BaseGame
         meteors.Clear();
         stars.Clear();
         meteors.SpawnInterval -= TimeSpan.FromMilliseconds(10);
-        untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
+        //untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
+        untilNextWave = TimeSpan.FromSeconds(20);
     }
 
     public static void EndGameToTitleScreen()
