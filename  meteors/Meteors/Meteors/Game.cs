@@ -29,8 +29,7 @@ public class MeteorsGame : BaseGame
 
     private static TimeSpan untilNextWave;
 
-    private static readonly TimeSpan gameOverTitleScreenInactiveTime = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan nextLevelTitleScreenInactiveTime = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan titleScreenInactiveTime = TimeSpan.FromSeconds(1);
     private static TimeSpan untilTitleScreenActive;
 
     private const string instructions = "Press any key!";
@@ -59,11 +58,13 @@ public class MeteorsGame : BaseGame
         background = LoadTexture("starfield");
         titleFont = Content.Load<SpriteFont>("titlefont");
 
+        planet = new Planet(new Sprite("planet2", 1.25f), GameWindow.Center.ToVector2(), 600);
+        ServiceLocator.Register<Planet>(planet);
+
         player = new Player(new Sprite("stickman", 1.0f), -MathHelper.PiOver2);
         ServiceLocator.Register<Player>(player);
 
-        planet = new Planet(new Sprite("planet2", 1.25f), GameWindow.Center.ToVector2(), 600);
-        ServiceLocator.Register<Planet>(planet);
+        player.PositionOnPlanet(planet);
 
         meteors = new MeteorManager(MAX_METEORS, INITIAL_METEOR_SPAWN_INTERVAL) { IsRandomActive = true };
 
@@ -119,10 +120,12 @@ public class MeteorsGame : BaseGame
                 stars.OffsetAngles(Player.PLAYER_ROT_SPEED);
             }
 
+            //Console.WriteLine("Planet angle = {0} degrees", MathHelper.ToDegrees(planet.Angle));
+
             //comment out to make the game stop playing; useful when testing new waves
             UpdateGameBehavior(gameTime);
 
-            player.Update();
+            player.Update(gameTime);
             stars.Update(gameTime);
         }
 
@@ -250,7 +253,7 @@ public class MeteorsGame : BaseGame
     {
         TitleScreen = true;
         instructionsVisible = false;
-        untilTitleScreenActive = gameOverTitleScreenInactiveTime;
+        untilTitleScreenActive = titleScreenInactiveTime;
         titleScreenText = GAME_TITLE;
         meteors.SpawnInterval = INITIAL_METEOR_SPAWN_INTERVAL;
     }
@@ -259,8 +262,7 @@ public class MeteorsGame : BaseGame
     {
         TitleScreen = true;
         instructionsVisible = false;
-        untilTitleScreenActive = nextLevelTitleScreenInactiveTime;
+        untilTitleScreenActive = titleScreenInactiveTime;
         titleScreenText = NEXT_LEVEL;
-        player.StarPower = 0;
     }
 }

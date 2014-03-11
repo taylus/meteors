@@ -30,11 +30,7 @@ public class Star : FallingObject
         if (!MarkedForDeletion && player.BoundingRectangle.Intersects(BoundingRectangle))
         {
             MarkedForDeletion = true;
-            player.StarPower++;
-            if (player.StarPower >= StarPowerMeter.MAX_POWER)
-            {
-                MeteorsGame.NextLevel();
-            }
+            player.Touch(this);
         }
     }
 }
