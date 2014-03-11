@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -10,6 +11,8 @@ public class Player
     public Sprite Sprite { get; private set; }
     public float Angle { get; set; }
     public int StarPower { get; set; }
+    public bool Invulnerable { get { return untilVulnerable > TimeSpan.Zero; } }
+    public bool Visible { get; set; }
 
     //opportunity for inheritance once all drawable objects inherit together
     //default bounding rect to cover the whole sprite, and some objects can override it smaller
@@ -18,28 +21,95 @@ public class Player
     //amount to increase rotation by on keydown
     public const float PLAYER_ROT_SPEED = 0.015f;
 
+    private TimeSpan untilVulnerable;
+    private static readonly TimeSpan invulnerabilityTime = TimeSpan.FromMilliseconds(500);
+
+    private TimeSpan untilNextBlink;
+    private static readonly TimeSpan blinkInterval = TimeSpan.FromMilliseconds(100);
+
     public Player(Sprite spr, float angle)
     {
         Sprite = spr;
         Angle = angle;
+        Visible = true;
+        Reset();
     }
 
-    public void Update()
+    public void Reset()
     {
+        //untilVulnerable = TimeSpan.Zero;
+        //untilNextBlink = TimeSpan.Zero;
+        Visible = true;
+        //StarPower = 1;
+    }
+
+    public void Update(GameTime gameTime)
+    {
+        if (Invulnerable)
+        {
+            untilVulnerable -= gameTime.ElapsedGameTime;
+            untilNextBlink -= gameTime.ElapsedGameTime;
+            if (untilNextBlink <= TimeSpan.Zero)
+            {
+                Visible = !Visible;
+                untilNextBlink = blinkInterval;
+            }
+        }
+        else if (!Invulnerable && !Visible)
+        {
+            //always become visible after invulnerability ends
+            Visible = true;
+        }
+    }
+
+    public void PositionOnPlanet(Planet planet)
+    {
+        //calculate player's x,y coords given angle and radius (polar -> cartesian)
         //since sprite positions are centered, offset the circle the player projected onto by his height so his feet touch the surface
-        Planet planet = ServiceLocator.Get<Planet>();
         Circle playerPlanetCircle = new Circle(planet.Center, planet.Radius + Sprite.ScaledHeight / 2);
         Vector2 pointOnPlanet = Util.GetPointOnCircle(playerPlanetCircle, Angle);
 
         //update sprite's position and angle
-        //Console.WriteLine("Point at angle {0} = ({1}, {2})", MathHelper.ToDegrees(playerAngle), pointOnPlanet.X, pointOnPlanet.Y);
+        //Console.WriteLine("Point at angle {0} = ({1}, {2})", MathHelper.ToDegrees(Angle), pointOnPlanet.X, pointOnPlanet.Y);
         Sprite.Position = pointOnPlanet;
         Sprite.Rotation = Angle + MathHelper.PiOver2;
     }
 
+    public void Touch(FallingObject o)
+    {
+        if (o.GetType() == typeof(Meteor) && !Invulnerable)
+        {
+            //Sprite.Color = Util.RandomColor();
+            StarPower--;
+            if (StarPower < 0)
+            {
+                StarPower = 0;
+                MeteorsGame.EndGameToTitleScreen();
+                Reset();
+            }
+            else
+            {
+                //make player temporarily invulnerable when hit
+                untilVulnerable = invulnerabilityTime;
+            }
+        }
+        else if (o.GetType() == typeof(Star))
+        {
+            StarPower++;
+            if (StarPower >= StarPowerMeter.MAX_POWER)
+            {
+                MeteorsGame.NextLevel();
+                Reset();
+            }
+        }
+    }
+
     public void Draw(SpriteBatch sb)
     {
-        Sprite.Draw(sb);
-        //Util.DrawRectangle(Sprite.RotatedRectangle, new Color(0, 128, 0, 32));
+        if (Visible)
+        {
+            Sprite.Draw(sb);
+            //Util.DrawRectangle(sb, Sprite.RotatedRectangle, new Color(0, 128, 0, 128));
+        }
     }
 }

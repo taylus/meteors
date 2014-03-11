@@ -38,13 +38,7 @@ public class Meteor : FallingObject
             if (!MeteorsGame.TitleScreen && p.BoundingRectangle.Intersects(BoundingRectangle))
             {
                 BecomeDustCloud();
-                //p.Sprite.Color = Util.RandomColor();
-                p.StarPower--;
-                if (p.StarPower < 0)
-                {
-                    p.StarPower = 0;
-                    MeteorsGame.EndGameToTitleScreen();
-                }
+                p.Touch(this);
             }
         }
         //meteor has hit the planet and exploded, slowly fade out then mark for deletion

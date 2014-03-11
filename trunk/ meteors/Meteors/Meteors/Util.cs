@@ -113,9 +113,8 @@ public static class Util
         sb.Draw(dummyTexture, rect, color);
     }
 
-    public static void DrawRectangle(RotatedRectangle rect, Color color)
+    public static void DrawRectangle(SpriteBatch sb, RotatedRectangle rect, Color color)
     {
-        SpriteBatch sb = ServiceLocator.Get<SpriteBatch>();
         if (dummyTexture == null)
         {
             dummyTexture = new Texture2D(sb.GraphicsDevice, 1, 1);
