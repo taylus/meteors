@@ -1,12 +1,14 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 public class Meteor : FallingObject
 {
     private static Texture2D dustTexture = BaseGame.LoadTexture("dust");
+    public const float DEFAULT_FALL_SPEED = 2.0f;
 
-    public Meteor(float? angle = null)
+    public Meteor(float? angle = null, float fallSpeed = DEFAULT_FALL_SPEED)
     {
         Sprite = new Sprite("meteor");
         if (angle == null)
@@ -17,7 +19,7 @@ public class Meteor : FallingObject
         {
             Angle = angle.Value;
         }
-        FallSpeed = 2.0f;
+        FallSpeed = fallSpeed;
     }
 
     public override void Update()
@@ -57,5 +59,47 @@ public class Meteor : FallingObject
         Sprite.Color = Color.SandyBrown;
         Sprite.Scale = 0.35f;
         Sprite.Alpha = 0.6f;
+    }
+}
+
+public class CurveMeteor : Meteor
+{
+    private float curve;
+
+    public CurveMeteor(float? angle = null, float fallSpeed = DEFAULT_FALL_SPEED) : base(angle, fallSpeed)
+    {
+        curve = Util.Random(MathHelper.ToRadians(-1), MathHelper.ToRadians(1));
+    }
+
+    public override void Update()
+    {
+        if(Active) Angle += curve;
+        base.Update();
+    }
+}
+
+public class OscillatingMeteor : Meteor
+{
+    //current angle offset oscillates between [-amplitude, amplitude]
+    private float currentOffset;
+    private int offsetSign;
+    private float amplitude;
+
+    public OscillatingMeteor(float amplitude, float? angle = null, float fallSpeed = DEFAULT_FALL_SPEED) : base(angle, fallSpeed)
+    {
+        this.amplitude = amplitude;
+        offsetSign = 1;
+    }
+
+    public override void Update()
+    {
+        Angle += (offsetSign * MathHelper.ToRadians(0.25f));
+        currentOffset += (offsetSign * MathHelper.ToRadians(0.25f));
+        if (currentOffset < -amplitude || currentOffset > amplitude)
+        {
+            offsetSign *= -1;
+        }
+
+        base.Update();
     }
 }

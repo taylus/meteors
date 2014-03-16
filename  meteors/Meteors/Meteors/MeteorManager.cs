@@ -15,6 +15,7 @@ public class MeteorManager
     public TimeSpan SpawnInterval { get; set; }
     public int Count { get { return meteors.Count; } }
     public bool IsRandomActive { get; set; }
+    public float CurveMeteorPercent { get; set; }
 
     private List<Meteor> meteors = new List<Meteor>();
     private TimeSpan lastRandomSpawnTime;
@@ -38,7 +39,14 @@ public class MeteorManager
                 if (timeSinceLastSpawn >= SpawnInterval)
                 {
                     //spawn a meteor
-                    meteors.Add(new Meteor());
+                    if (Util.Random(0, 1.0f) < CurveMeteorPercent)
+                    {
+                        meteors.Add(new CurveMeteor());
+                    }
+                    else
+                    {
+                        meteors.Add(new Meteor());
+                    }
                     lastRandomSpawnTime = curTime.TotalGameTime;
                 }
             }
@@ -64,6 +72,11 @@ public class MeteorManager
                 else
                 {
                     IsRandomActive = false;
+                }
+
+                if (random.Value.CurvePercent != null)
+                {
+                    CurveMeteorPercent = random.Value.CurvePercent.Value;
                 }
             }
 
@@ -97,6 +110,7 @@ public class MeteorManager
         if (debug)
         {
             Viewport screen = sb.GraphicsDevice.Viewport;
+            sb.DrawString(BaseGame.Font, string.Format("Time: {0}", scriptedWaves.Count > 0 ? scriptedWaves[0].CurrentSpawnTimeIndex.ToString(@"mm\:ss\.ff") : ""), new Vector2(2, screen.Height - 3 * BaseGame.Font.LineSpacing), Color.White);
             sb.DrawString(BaseGame.Font, string.Format("Waves: {0}", scriptedWaves.Count), new Vector2(2, screen.Height - 2 * BaseGame.Font.LineSpacing), Color.White);
             sb.DrawString(BaseGame.Font, string.Format("Meteors: {0}", meteors.Count), new Vector2(2, screen.Height - BaseGame.Font.LineSpacing), Color.White);
 
@@ -121,8 +135,6 @@ public class MeteorManager
     public void LoadWave(string pathname, long timeIndexOffset = 0)
     {
         MeteorWave wave = new MeteorWave();
-        wave.LastSpawnTimeIndex = TimeSpan.Zero;
-        wave.CurrentSpawnTimeIndex = TimeSpan.Zero;
         wave.ScriptedMeteors = new List<ScriptedMeteor>();
         wave.RandomSettings = new List<ScriptedRandom>();
 
@@ -145,32 +157,52 @@ public class MeteorManager
                 //or "1000 random off" to stop spawning random meteors 1 second into this wave
                 if(string.Equals(lineData[1], "random", StringComparison.OrdinalIgnoreCase))
                 {
-                    int spawnInterval;
-                    if (lineData.Length > 2 && int.TryParse(lineData[2], out spawnInterval))
-                    {
-                        wave.RandomSettings.Add(new ScriptedRandom(time + timeIndexOffset, TimeSpan.FromMilliseconds(spawnInterval)));
-                    }
-                    else
-                    {
-                        wave.RandomSettings.Add(new ScriptedRandom(time + timeIndexOffset, null));
-                    }
+                    ScriptedRandom rand = ParseScriptedRandomSettings(time + timeIndexOffset, lineData);
+                    wave.RandomSettings.Add(rand);
                 }
                 else
                 {
                     float angle;
                     if (!float.TryParse(lineData[1], out angle))
                     {
-                        throw new Exception("Error loading meteor in wave \"" + pathname + "\". Expected format: <time index in ms> <angle in degrees>");
+                        throw new Exception("Error loading meteor in wave \"" + pathname + "\". Expected <angle in degrees>");
+                    }
+                    angle = MathHelper.ToRadians(float.Parse(lineData[1]));
+
+                    float speed = Meteor.DEFAULT_FALL_SPEED;
+                    if (lineData.Length > 2 && !float.TryParse(lineData[2], out speed))
+                    {
+                        throw new Exception("Error loading meteor in wave \"" + pathname + "\". Expected <speed in pixels/sec>");
                     }
 
-                    angle = MathHelper.ToRadians(float.Parse(lineData[1]));
-                    Meteor meteor = new Meteor(angle);
+                    Meteor meteor = new Meteor(angle, speed);
                     wave.ScriptedMeteors.Add(new ScriptedMeteor(time + timeIndexOffset, meteor));
                 }
             }
         }
 
         scriptedWaves.Add(wave);
+    }
+
+    private ScriptedRandom ParseScriptedRandomSettings(long time, string[] lineData)
+    {
+        int spawnInterval;
+        if (lineData.Length > 2 && int.TryParse(lineData[2], out spawnInterval))
+        {
+            float curvePercent;
+            if (lineData.Length > 3 && float.TryParse(lineData[3], out curvePercent))
+            {
+                return new ScriptedRandom(time, TimeSpan.FromMilliseconds(spawnInterval), curvePercent);
+            }
+            else
+            {
+                return new ScriptedRandom(time, TimeSpan.FromMilliseconds(spawnInterval), null);
+            }
+        }
+        else
+        {
+            return new ScriptedRandom(time, null, null);
+        }
     }
 
     public void LoadLevel(string pathname)
@@ -190,8 +222,18 @@ public class MeteorManager
                     throw new Exception("Error loading wave \"" + pathname + "\". Expected format: <time index in ms> <wave file>");
                 }
 
-                string wavefile = lineData[1].Replace("\"", "");
-                LoadWave(wavefile, time);
+                if (string.Equals(lineData[1], "random", StringComparison.OrdinalIgnoreCase))
+                {
+                    MeteorWave wave = new MeteorWave();
+                    wave.ScriptedMeteors = new List<ScriptedMeteor>();
+                    wave.RandomSettings = new List<ScriptedRandom>() {ParseScriptedRandomSettings(time, lineData)};
+                    scriptedWaves.Add(wave);
+                }
+                else
+                {
+                    string wavefile = lineData[1].Replace("\"", "");
+                    LoadWave(wavefile, time);
+                }
             }
         }
     }
@@ -210,8 +252,13 @@ public class MeteorManager
         return scriptedWaves.Count > 0 && scriptedWaves.Any(w => w.ScriptedMeteors.Count > 0);
     }
 
-    public void Clear()
+    public void ClearMeteors()
     {
         meteors.Clear();
+    }
+
+    public void ClearWaves()
+    {
+        scriptedWaves.Clear();
     }
 }

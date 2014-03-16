@@ -28,10 +28,14 @@ public struct ScriptedRandom
     //null indicates this is an instruction to turn OFF random meteor spawning
     public TimeSpan? SpawnInterval;
 
-    public ScriptedRandom(long time, TimeSpan? spawnInterval)
+    //percentage of meteors spawned that should be randomly curved
+    public float? CurvePercent;
+
+    public ScriptedRandom(long time, TimeSpan? spawnInterval, float? curvePercent)
     {
         TimeIndex = time;
         SpawnInterval = spawnInterval;
+        CurvePercent = curvePercent;
     }
 }
 
