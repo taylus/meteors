@@ -40,7 +40,7 @@ public class Player
         //untilVulnerable = TimeSpan.Zero;
         //untilNextBlink = TimeSpan.Zero;
         Visible = true;
-        //StarPower = 1;
+        StarPower = 0;
     }
 
     public void Update(GameTime gameTime)
@@ -77,7 +77,7 @@ public class Player
 
     public void Touch(FallingObject o)
     {
-        if (o.GetType() == typeof(Meteor) && !Invulnerable)
+        if (typeof(Meteor).IsAssignableFrom(o.GetType()) && !Invulnerable)
         {
             //Sprite.Color = Util.RandomColor();
             StarPower--;

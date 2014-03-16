@@ -1,0 +1,24 @@
+0 random 175
+9500 "waves\ring.txt"
+
+29000 random off
+30000 "waves\cw_spirals.txt"
+
+37500 random 150
+
+42500 random off
+43500 "waves\ccw_spirals.txt"
+
+52000 random 150 0.1
+
+65000 "waves\safezone_down.txt"
+71000 "waves\safezone_up.txt"
+76000 "waves\safezone_down.txt"
+
+95000 "waves\ring.txt"
+97000 "waves\ring.txt"
+99000 "waves\ring.txt"
+
+100000 random 150 0.25
+115000 random 140 0.3
+130000 random 130 0.4

@@ -7,8 +7,12 @@ Content\starfield.xnb
 Content\font.xnb
 Content\iceplanet.xnb
 Content\titlefont.xnb
-levels\1.txt
-waves\hemispiral.txt
+Content\doom.xnb
+Content\doom.wma
+levels\doom.txt
+waves\ccw_spirals.txt
+waves\cw_spirals.txt
 waves\quadrants.txt
 waves\ring.txt
-waves\spirals.txt
+waves\safezone_down.txt
+waves\safezone_up.txt

@@ -22,10 +22,10 @@ public class MeteorsGame : BaseGame
     private static StarPowerMeter starMeter;
 
     private const int MAX_METEORS = 250;
-    private static readonly TimeSpan INITIAL_METEOR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(160);
+    private static readonly TimeSpan INITIAL_METEOR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(150);
 
     private const int MAX_STARS = 1;
-    private static readonly TimeSpan STAR_SPAWN_INTERVAL = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan STAR_SPAWN_INTERVAL = TimeSpan.FromSeconds(15);
 
     private static TimeSpan untilNextWave;
 
@@ -41,6 +41,8 @@ public class MeteorsGame : BaseGame
     private const string NEXT_LEVEL = "Level Up!";
     private static string titleScreenText;
     public static bool TitleScreen { get; private set; }
+
+    private static Song bgMusic;
 
     public MeteorsGame()
     {
@@ -70,11 +72,25 @@ public class MeteorsGame : BaseGame
 
         stars = new StarManager(MAX_STARS, STAR_SPAWN_INTERVAL);
         starMeter = new StarPowerMeter();
+
+        bgMusic = Content.Load<Song>("doom");
+        MediaPlayer.Volume = 0.6f;
     }
 
     protected override void Update(GameTime gameTime)
     {
-        if (!IsActive) return;
+        if (!IsActive)
+        {
+            if (MediaPlayer.State == MediaState.Playing)
+            {
+                MediaPlayer.Pause();
+            }
+            return;
+        }
+        else if (IsActive && MediaPlayer.State == MediaState.Paused)
+        {
+            MediaPlayer.Resume();
+        }
 
         curKeyboard = Keyboard.GetState();
         curMouse = Mouse.GetState();
@@ -122,8 +138,8 @@ public class MeteorsGame : BaseGame
 
             //Console.WriteLine("Planet angle = {0} degrees", MathHelper.ToDegrees(planet.Angle));
 
-            //comment out to make the game stop playing; useful when testing new waves
-            UpdateGameBehavior(gameTime);
+            //comment out to make the default game behavior of random wave spawning stop
+            //UpdateGameBehavior(gameTime);
 
             player.Update(gameTime);
             stars.Update(gameTime);
@@ -149,16 +165,17 @@ public class MeteorsGame : BaseGame
         if (KeyPressedThisFrame(Keys.D1))
         {
             meteors.IsRandomActive = false;
-            meteors.LoadWave(@"waves\spirals.txt");
-            untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
+            meteors.LoadWave(@"waves\cw_spirals.txt");
+            //untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
         }
         if (KeyPressedThisFrame(Keys.D2))
         {
-            meteors.LoadWave(@"waves\ring.txt");
+            meteors.IsRandomActive = false;
+            meteors.LoadWave(@"waves\ccw_spirals.txt");
         }
         if (KeyPressedThisFrame(Keys.D3))
         {
-            meteors.LoadWave(@"waves\quadrants.txt");
+            meteors.LoadWave(@"waves\safezone.txt");
         }
 
         if (ScrollUpThisFrame() && meteors.SpawnInterval > TimeSpan.Zero)
@@ -242,20 +259,24 @@ public class MeteorsGame : BaseGame
     public static void StartGameFromTitleScreen()
     {
         TitleScreen = false;
-        meteors.Clear();
+        meteors.ClearMeteors();
         stars.Clear();
-        meteors.SpawnInterval -= TimeSpan.FromMilliseconds(10);
+        //meteors.SpawnInterval -= TimeSpan.FromMilliseconds(10);
         //untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
-        untilNextWave = TimeSpan.FromSeconds(20);
+        //untilNextWave = TimeSpan.FromSeconds(20);
+        meteors.LoadLevel(@"levels\doom.txt");
+        MediaPlayer.Play(bgMusic);
     }
 
     public static void EndGameToTitleScreen()
     {
         TitleScreen = true;
+        meteors.ClearWaves();
         instructionsVisible = false;
         untilTitleScreenActive = titleScreenInactiveTime;
         titleScreenText = GAME_TITLE;
         meteors.SpawnInterval = INITIAL_METEOR_SPAWN_INTERVAL;
+        MediaPlayer.Stop();
     }
 
     public static void NextLevel()
@@ -264,5 +285,6 @@ public class MeteorsGame : BaseGame
         instructionsVisible = false;
         untilTitleScreenActive = titleScreenInactiveTime;
         titleScreenText = NEXT_LEVEL;
+        player.Reset();
     }
 }
