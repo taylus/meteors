@@ -16,6 +16,7 @@ public class MeteorManager
     public int Count { get { return meteors.Count; } }
     public bool IsRandomActive { get; set; }
     public float CurveMeteorPercent { get; set; }
+    public float CurveMeteorDegrees { get; set; }
 
     private List<Meteor> meteors = new List<Meteor>();
     private TimeSpan lastRandomSpawnTime;
@@ -41,7 +42,7 @@ public class MeteorManager
                     //spawn a meteor
                     if (Util.Random(0, 1.0f) < CurveMeteorPercent)
                     {
-                        meteors.Add(new CurveMeteor());
+                        meteors.Add(new CurveMeteor(CurveMeteorDegrees));
                     }
                     else
                     {
@@ -260,5 +261,18 @@ public class MeteorManager
     public void ClearWaves()
     {
         scriptedWaves.Clear();
+    }
+
+    //player used a bomb powerup, explode all meteors onscreen
+    public void BombExplosion()
+    {
+        //TODO: screen flash, sound effect
+        foreach (Meteor m in meteors)
+        {
+            if (m.Active && m.OnScreen)
+            {
+                m.Explode();
+            }
+        }
     }
 }
