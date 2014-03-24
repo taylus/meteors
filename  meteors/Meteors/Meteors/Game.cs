@@ -20,14 +20,18 @@ public class MeteorsGame : BaseGame
     private static MeteorManager meteors;
     private static StarManager stars;
     private static StarPowerMeter starMeter;
+    private static PowerupManager powerups;
 
     private const int MAX_METEORS = 250;
-    private static readonly TimeSpan INITIAL_METEOR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(150);
+    private static readonly TimeSpan INITIAL_METEOR_SPAWN_INTERVAL = TimeSpan.FromMilliseconds(175);
 
     private const int MAX_STARS = 1;
     private static readonly TimeSpan STAR_SPAWN_INTERVAL = TimeSpan.FromSeconds(15);
 
-    private static TimeSpan untilNextWave;
+    private const int MAX_POWERUPS = 1;
+    private static readonly TimeSpan POWERUP_SPAWN_INTERVAL = TimeSpan.FromSeconds(1);
+
+    private static TimeSpan untilNextWave = TimeSpan.FromSeconds(20);
 
     private static readonly TimeSpan titleScreenInactiveTime = TimeSpan.FromSeconds(1);
     private static TimeSpan untilTitleScreenActive;
@@ -68,9 +72,9 @@ public class MeteorsGame : BaseGame
 
         player.PositionOnPlanet(planet);
 
-        meteors = new MeteorManager(MAX_METEORS, INITIAL_METEOR_SPAWN_INTERVAL) { IsRandomActive = true };
-
+        meteors = new MeteorManager(MAX_METEORS, INITIAL_METEOR_SPAWN_INTERVAL) { IsRandomActive = true, CurveMeteorPercent = 0.1f, CurveMeteorDegrees = 0.5f };
         stars = new StarManager(MAX_STARS, STAR_SPAWN_INTERVAL);
+        powerups = new PowerupManager(MAX_POWERUPS, POWERUP_SPAWN_INTERVAL);
         starMeter = new StarPowerMeter();
 
         bgMusic = Content.Load<Song>("doom");
@@ -81,14 +85,15 @@ public class MeteorsGame : BaseGame
     {
         if (!IsActive)
         {
-            if (MediaPlayer.State == MediaState.Playing)
-            {
-                MediaPlayer.Pause();
-            }
+            //pause background music if game goes inactive
+            if (MediaPlayer.State == MediaState.Playing) MediaPlayer.Pause();
+
+            //and stop updating everything else too
             return;
         }
         else if (IsActive && MediaPlayer.State == MediaState.Paused)
         {
+            //resume audio once game is active again
             MediaPlayer.Resume();
         }
 
@@ -96,6 +101,8 @@ public class MeteorsGame : BaseGame
         curMouse = Mouse.GetState();
 
         if (curKeyboard.IsKeyDown(Keys.Escape)) this.Exit();
+
+        meteors.Update(gameTime);
 
         if (TitleScreen)
         {
@@ -128,24 +135,29 @@ public class MeteorsGame : BaseGame
                 planet.Angle -= Player.PLAYER_ROT_SPEED;
                 meteors.OffsetAngles(-Player.PLAYER_ROT_SPEED);
                 stars.OffsetAngles(-Player.PLAYER_ROT_SPEED);
+                powerups.OffsetAngles(-Player.PLAYER_ROT_SPEED);
             }
             if (curKeyboard.IsKeyDown(Keys.A))
             {
                 planet.Angle += Player.PLAYER_ROT_SPEED;
                 meteors.OffsetAngles(Player.PLAYER_ROT_SPEED);
                 stars.OffsetAngles(Player.PLAYER_ROT_SPEED);
+                powerups.OffsetAngles(Player.PLAYER_ROT_SPEED);
+            }
+            if (KeyPressedThisFrame(Keys.Space))
+            {
+                meteors.BombExplosion();
             }
 
             //Console.WriteLine("Planet angle = {0} degrees", MathHelper.ToDegrees(planet.Angle));
 
             //comment out to make the default game behavior of random wave spawning stop
-            //UpdateGameBehavior(gameTime);
+            UpdateGameBehavior(gameTime);
 
             player.Update(gameTime);
             stars.Update(gameTime);
+            powerups.Update(gameTime);
         }
-
-        meteors.Update(gameTime);
 
         prevKeyboard = curKeyboard;
         prevMouse = curMouse;
@@ -214,6 +226,7 @@ public class MeteorsGame : BaseGame
         else
         {
             stars.Draw(spriteBatch, true);
+            powerups.Draw(spriteBatch, true);
             player.Draw(spriteBatch);
             starMeter.Draw(spriteBatch, player.StarPower);
         }
@@ -240,8 +253,7 @@ public class MeteorsGame : BaseGame
             }
 
             //back off and wait again, even if we didn't load a wave
-            //untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
-            untilNextWave = TimeSpan.FromSeconds(20);
+            untilNextWave = TimeSpan.FromSeconds(Util.Random(20, 40));
         }
         else if (!meteors.IsWaveSpawning())
         {
@@ -261,11 +273,12 @@ public class MeteorsGame : BaseGame
         TitleScreen = false;
         meteors.ClearMeteors();
         stars.Clear();
+        powerups.Clear();
         //meteors.SpawnInterval -= TimeSpan.FromMilliseconds(10);
         //untilNextWave = TimeSpan.FromSeconds(Util.Random(10, 20));
         //untilNextWave = TimeSpan.FromSeconds(20);
-        meteors.LoadLevel(@"levels\doom.txt");
-        MediaPlayer.Play(bgMusic);
+        //meteors.LoadLevel(@"levels\doom.txt");
+        //MediaPlayer.Play(bgMusic);
     }
 
     public static void EndGameToTitleScreen()

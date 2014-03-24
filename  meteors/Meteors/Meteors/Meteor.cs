@@ -31,7 +31,7 @@ public class Meteor : FallingObject
             //planet collision
             if (Util.CircleCollision(ServiceLocator.Get<Planet>().Bounds, new Circle(Sprite.Position, Sprite.ScaledWidth / 3)))
             {
-                BecomeDustCloud();
+                Explode();
                 return;
             }
 
@@ -39,7 +39,7 @@ public class Meteor : FallingObject
             Player p = ServiceLocator.Get<Player>();
             if (!MeteorsGame.TitleScreen && p.BoundingRectangle.Intersects(BoundingRectangle))
             {
-                BecomeDustCloud();
+                Explode();
                 p.Touch(this);
             }
         }
@@ -52,7 +52,7 @@ public class Meteor : FallingObject
         }
     }
 
-    private void BecomeDustCloud()
+    public void Explode()
     {
         Active = false;
         Sprite.Texture = dustTexture;
@@ -66,9 +66,9 @@ public class CurveMeteor : Meteor
 {
     private float curve;
 
-    public CurveMeteor(float? angle = null, float fallSpeed = DEFAULT_FALL_SPEED) : base(angle, fallSpeed)
+    public CurveMeteor(float curveDegrees = 1.0f, float? angle = null, float fallSpeed = DEFAULT_FALL_SPEED) : base(angle, fallSpeed)
     {
-        curve = Util.Random(MathHelper.ToRadians(-1), MathHelper.ToRadians(1));
+        curve = Util.Random(MathHelper.ToRadians(-curveDegrees), MathHelper.ToRadians(curveDegrees));
     }
 
     public override void Update()

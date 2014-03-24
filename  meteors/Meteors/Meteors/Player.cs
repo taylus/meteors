@@ -77,6 +77,7 @@ public class Player
 
     public void Touch(FallingObject o)
     {
+        //TODO: refactor into separate Touch methods in FallingObject subclasses
         if (typeof(Meteor).IsAssignableFrom(o.GetType()) && !Invulnerable)
         {
             //Sprite.Color = Util.RandomColor();

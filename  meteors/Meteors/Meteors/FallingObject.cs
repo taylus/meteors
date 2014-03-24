@@ -19,6 +19,14 @@ public abstract class FallingObject
             Sprite.Rotation = value;
         }
     }
+    public bool OnScreen
+    {
+        get
+        {
+            return Sprite.X >= 0 && Sprite.X < MeteorsGame.GameWidth &&
+                   Sprite.Y >= 0 && Sprite.Y < MeteorsGame.GameHeight;
+        }
+    }
 
     public FallingObject()
     {
@@ -55,5 +63,10 @@ public abstract class FallingObject
         Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
         Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
         Sprite.Position = newPosition;
+    }
+
+    protected virtual void Touch(Player p)
+    {
+
     }
 }
