@@ -37,7 +37,7 @@ public class PowerupManager
             {
                 //TODO: spawn a random powerup
                 powerups.Add(new BombPowerup());
-                untilNextSpawn = SpawnInterval;
+                untilNextSpawn = RandomizeSpawnInterval(2.0f);
             }
         }
 
@@ -54,7 +54,14 @@ public class PowerupManager
         }
     }
 
-    public void Draw(SpriteBatch sb, bool debug)
+    //returns a random timespan ranging between SpawnInterval and (SpawnInterval * factor)
+    private TimeSpan RandomizeSpawnInterval(float factor)
+    {
+        float ms = Util.Random((float)SpawnInterval.TotalMilliseconds, (float)SpawnInterval.TotalMilliseconds * factor);
+        return TimeSpan.FromMilliseconds(ms);
+    }
+
+    public void Draw(SpriteBatch sb)
     {
         foreach (FallingObject o in powerups)
             o.Draw(sb);

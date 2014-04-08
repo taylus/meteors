@@ -28,17 +28,17 @@ public abstract class FallingObject
         }
     }
 
-    public FallingObject()
-    {
-        orbitRadius = ServiceLocator.Get<Planet>().OortCloud.Radius;
-        Active = true;
-        MarkedForDeletion = false;
-    }
-
     //use a smaller rect for collision
     public RotatedRectangle BoundingRectangle { get { return Sprite.RotatedRectangle.Scale(0.8f, 3, 1); } }
 
-    protected float orbitRadius;
+    public float OrbitRadius { get; protected set; }
+
+    public FallingObject()
+    {
+        OrbitRadius = ServiceLocator.Get<Planet>().OortCloud.Radius;
+        Active = true;
+        MarkedForDeletion = false;
+    }
 
     public virtual void Draw(SpriteBatch sb)
     {
@@ -51,7 +51,7 @@ public abstract class FallingObject
         if (Active)
         {
             //make object fall by decreasing orbit radius
-            orbitRadius -= FallSpeed;
+            OrbitRadius -= FallSpeed;
         }
 
         CalculatePosition();
@@ -60,7 +60,7 @@ public abstract class FallingObject
     //calculates the object's current position given its current orbit, and the game's planet
     private void CalculatePosition()
     {
-        Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, orbitRadius);
+        Circle orbit = new Circle(ServiceLocator.Get<Planet>().Center, OrbitRadius);
         Vector2 newPosition = Util.GetPointOnCircle(orbit, Angle);
         Sprite.Position = newPosition;
     }

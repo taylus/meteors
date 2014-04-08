@@ -11,6 +11,8 @@ public class Player
     public Sprite Sprite { get; private set; }
     public float Angle { get; set; }
     public int StarPower { get; set; }
+    public int BombCount { get; set; }
+    public long Score { get; set; }
     public bool Invulnerable { get { return untilVulnerable > TimeSpan.Zero; } }
     public bool Visible { get; set; }
 
@@ -41,6 +43,7 @@ public class Player
         //untilNextBlink = TimeSpan.Zero;
         Visible = true;
         StarPower = 0;
+        Score = 0;
     }
 
     public void Update(GameTime gameTime)
@@ -80,28 +83,31 @@ public class Player
         //TODO: refactor into separate Touch methods in FallingObject subclasses
         if (typeof(Meteor).IsAssignableFrom(o.GetType()) && !Invulnerable)
         {
-            //Sprite.Color = Util.RandomColor();
-            StarPower--;
-            if (StarPower < 0)
-            {
-                StarPower = 0;
-                MeteorsGame.EndGameToTitleScreen();
-                Reset();
-            }
-            else
-            {
-                //make player temporarily invulnerable when hit
-                untilVulnerable = invulnerabilityTime;
-            }
+            Reset();
+            MeteorsGame.EndGameToTitleScreen();
+                
+            //make player temporarily invulnerable when hit
+            //untilVulnerable = invulnerabilityTime;
         }
         else if (o.GetType() == typeof(Star))
         {
             StarPower++;
             if (StarPower >= StarPowerMeter.MAX_POWER)
             {
-                MeteorsGame.NextLevel();
                 Reset();
+                MeteorsGame.NextLevel();
             }
+
+            //determine if the player "caught" the star without it touching the planet
+            Planet planet = ServiceLocator.Get<Planet>();
+            if (Math.Abs(o.OrbitRadius - planet.Radius) > o.Sprite.ScaledHeight / 4)
+                Score += Star.POINTS_FOR_CATCHING;
+            else
+                Score += Star.POINTS_FOR_COLLECTING;
+        }
+        else if (o.GetType() == typeof(BombPowerup))
+        {
+            BombCount++;
         }
     }
 
