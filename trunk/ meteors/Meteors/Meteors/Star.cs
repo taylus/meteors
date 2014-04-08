@@ -4,6 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 public class Star : FallingObject
 {
+    public const int POINTS_FOR_COLLECTING = 1000;
+    public const int POINTS_FOR_CATCHING = 5000;
+
     public Star()
     {
         Sprite = new Sprite("star", 0.75f);

@@ -4,11 +4,12 @@ Content\planet2.xnb
 Content\dust.xnb
 Content\star.xnb
 Content\starfield.xnb
-Content\font.xnb
 Content\iceplanet.xnb
 Content\titlefont.xnb
 Content\doom.xnb
 Content\bomb.xnb
+Content\debugfont.xnb
+Content\uifont.xnb
 Content\doom.wma
 levels\doom.txt
 waves\ccw_spirals.txt

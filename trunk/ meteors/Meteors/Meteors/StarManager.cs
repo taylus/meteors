@@ -54,7 +54,7 @@ public class StarManager
         }
     }
 
-    public void Draw(SpriteBatch sb, bool debug)
+    public void Draw(SpriteBatch sb)
     {
         foreach (Star s in stars)
             s.Draw(sb);

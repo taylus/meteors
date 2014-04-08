@@ -57,7 +57,6 @@ public class BaseGame : Game
         contentManager = Content;
         graphicsDevice = GraphicsDevice;
         spriteBatch = new SpriteBatch(GraphicsDevice);
-        Font = Content.Load<SpriteFont>("font");
     }
 
     public bool AnyKeyPressedThisFrame()
